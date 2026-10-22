@@ -9,6 +9,7 @@ after ``Orchestrator.submit``.
 from __future__ import annotations
 
 import json
+import os
 import sys
 import threading
 from dataclasses import asdict
@@ -301,9 +302,17 @@ def serve(
     return server
 
 
+def listen_address() -> tuple[str, int]:
+    """Render sets ``PORT`` and expects ``0.0.0.0``. Local runs stay on 127.0.0.1:8765."""
+    port_raw = os.environ.get("PORT")
+    if port_raw:
+        return os.environ.get("HOST", "0.0.0.0"), int(port_raw)
+    return DEFAULT_HOST, DEFAULT_PORT
+
+
 def main(argv: list[str] | None = None) -> int:
     del argv
-    host, port = DEFAULT_HOST, DEFAULT_PORT
+    host, port = listen_address()
     try:
         server = serve(host=host, port=port)
     except (RuntimeError, ValueError) as error:
