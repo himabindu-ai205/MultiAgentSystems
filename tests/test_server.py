@@ -16,6 +16,7 @@ from orchestrator.graph import AgentSet
 from refinement.refiner import Refiner
 from refinement.router import RefinementRouter
 from reviewer.gate import Reviewer
+from paths import PROJECT_ROOT
 from server import Desk, FRONTEND_DIR, make_handler
 
 QUESTION = "What is the exit load of the HDFC Large Cap fund?"
@@ -173,6 +174,57 @@ def test_path_traversal_is_rejected():
     finally:
         server.shutdown()
         server.server_close()
+
+
+def test_wsgi_entrypoint_serves_health_and_a_ticket():
+    from io import BytesIO
+
+    import server as server_mod
+
+    desk = Desk(stub_app())
+    original = server_mod.get_desk
+    server_mod.get_desk = lambda: desk
+    captured: dict[str, str] = {}
+
+    def start_response(status, headers):
+        captured["status"] = status
+
+    try:
+        chunks = server_mod.wsgi_app(
+            {
+                "REQUEST_METHOD": "GET",
+                "PATH_INFO": "/api/health",
+                "QUERY_STRING": "",
+                "CONTENT_LENGTH": "0",
+                "wsgi.input": BytesIO(),
+            },
+            start_response,
+        )
+        assert captured["status"].startswith("200")
+        assert b'"ok": true' in b"".join(chunks)
+
+        body = json.dumps({"complaint": QUESTION}).encode()
+        chunks = server_mod.wsgi_app(
+            {
+                "REQUEST_METHOD": "POST",
+                "PATH_INFO": "/api/tickets",
+                "QUERY_STRING": "",
+                "CONTENT_LENGTH": str(len(body)),
+                "wsgi.input": BytesIO(body),
+            },
+            start_response,
+        )
+        assert captured["status"].startswith("200")
+        assert json.loads(b"".join(chunks))["complaint"] == QUESTION
+    finally:
+        server_mod.get_desk = original
+
+
+def test_vercel_config_points_at_the_wsgi_app():
+    text = (PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'entrypoint = "index:app"' in text
+    index = (PROJECT_ROOT / "index.py").read_text(encoding="utf-8")
+    assert "app = wsgi_app" in index
 
 
 def test_frontend_dir_is_the_stitch_folder():

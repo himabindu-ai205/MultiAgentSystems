@@ -12,6 +12,7 @@ import json
 import os
 import sys
 import threading
+from io import BytesIO
 from dataclasses import asdict
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -67,11 +68,7 @@ def view_payload(view: HumanView) -> dict[str, Any]:
     return asdict(view)
 
 
-def _read_json(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
-    length = int(handler.headers.get("Content-Length") or 0)
-    if length <= 0:
-        return {}
-    raw = handler.rfile.read(length)
+def _parse_json(raw: bytes) -> dict[str, Any]:
     if not raw:
         return {}
     try:
@@ -81,6 +78,12 @@ def _read_json(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError("body must be a JSON object")
     return data
+
+
+def _read_json(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
+    length = int(handler.headers.get("Content-Length") or 0)
+    raw = handler.rfile.read(length) if length > 0 else b""
+    return _parse_json(raw)
 
 
 def _safe_static(root: Path, url_path: str) -> Path | None:
@@ -300,6 +303,64 @@ def serve(
     desk = Desk(built)
     server = ThreadingHTTPServer((host, port), make_handler(desk, root))
     return server
+
+
+_desk: Desk | None = None
+_desk_ready = threading.Lock()
+
+
+def get_desk() -> Desk:
+    """The process-wide desk. Vercel reuses a warm instance when it can."""
+    global _desk
+    with _desk_ready:
+        if _desk is None:
+            _desk = Desk(build_app())
+        return _desk
+
+
+def _invoke(handler_cls: type[BaseHTTPRequestHandler], request: bytes) -> bytes:
+    """Run one stdlib handler without a listening socket."""
+    handler = handler_cls.__new__(handler_cls)
+    handler.rfile = BytesIO(request)
+    handler.wfile = BytesIO()
+    handler.client_address = ("127.0.0.1", 0)
+    handler.close_connection = True
+    handler.handle_one_request()
+    return handler.wfile.getvalue()
+
+
+def _split_response(raw: bytes) -> tuple[str, list[tuple[str, str]], bytes]:
+    head, _, body = raw.partition(b"\r\n\r\n")
+    lines = head.decode("iso-8859-1").split("\r\n")
+    status = lines[0].split(" ", 1)[1] if lines and " " in lines[0] else "500 Internal Server Error"
+    headers: list[tuple[str, str]] = []
+    for line in lines[1:]:
+        if ":" not in line:
+            continue
+        name, value = line.split(":", 1)
+        headers.append((name.strip(), value.strip()))
+    return status, headers, body
+
+
+def wsgi_app(environ: dict[str, Any], start_response: Any) -> list[bytes]:
+    """WSGI callable Vercel loads as ``app``. Same routes as the local server."""
+    method = environ.get("REQUEST_METHOD", "GET")
+    path = environ.get("PATH_INFO") or "/"
+    query = environ.get("QUERY_STRING") or ""
+    target = path if not query else f"{path}?{query}"
+    try:
+        length = int(environ.get("CONTENT_LENGTH") or 0)
+    except ValueError:
+        length = 0
+    payload = environ["wsgi.input"].read(length) if length else b""
+    header = f"{method} {target} HTTP/1.1\r\n"
+    if length:
+        header += f"Content-Length: {length}\r\nContent-Type: application/json\r\n"
+    header += "\r\n"
+    raw = _invoke(make_handler(get_desk(), FRONTEND_DIR), header.encode("ascii") + payload)
+    status, headers, body = _split_response(raw)
+    start_response(status, headers)
+    return [body]
 
 
 def listen_address() -> tuple[str, int]:
