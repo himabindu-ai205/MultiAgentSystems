@@ -104,6 +104,17 @@ def make_handler(desk: Desk, static_root: Path) -> type[BaseHTTPRequestHandler]:
         def log_message(self, format: str, *args: object) -> None:
             sys.stderr.write("%s - %s\n" % (self.address_string(), format % args))
 
+        def _cors(self) -> None:
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+
+        def do_OPTIONS(self) -> None:
+            self.send_response(HTTPStatus.NO_CONTENT)
+            self._cors()
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
         def do_GET(self) -> None:
             path = urlparse(self.path).path
             if path == "/api/health":
@@ -143,6 +154,7 @@ def make_handler(desk: Desk, static_root: Path) -> type[BaseHTTPRequestHandler]:
             self.send_header("Content-Type", _MIME.get(target.suffix.lower(), "application/octet-stream"))
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
+            self._cors()
             self.end_headers()
             self.wfile.write(body)
 
@@ -280,6 +292,7 @@ def make_handler(desk: Desk, static_root: Path) -> type[BaseHTTPRequestHandler]:
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
+            self._cors()
             self.end_headers()
             self.wfile.write(body)
 

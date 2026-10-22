@@ -42,15 +42,21 @@ def start_server(app: App | None = None):
 
 
 def call(server, method, path, body=None):
+    status, _, data = call_headers(server, method, path, body)
+    return status, data
+
+
+def call_headers(server, method, path, body=None):
     conn = HTTPConnection("127.0.0.1", server.server_address[1], timeout=10)
     payload = None if body is None else json.dumps(body)
     headers = {"Content-Type": "application/json"} if payload else {}
     conn.request(method, path, body=payload, headers=headers)
     response = conn.getresponse()
     raw = response.read()
+    header_map = {name.lower(): value for name, value in response.getheaders()}
     conn.close()
     data = json.loads(raw.decode("utf-8")) if raw.startswith(b"{") or raw.startswith(b"[") else raw
-    return response.status, data
+    return response.status, header_map, data
 
 
 def test_health_and_stitch_frontend_are_served():
@@ -220,11 +226,25 @@ def test_wsgi_entrypoint_serves_health_and_a_ticket():
         server_mod.get_desk = original
 
 
-def test_vercel_config_points_at_the_wsgi_app():
-    text = (PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert 'entrypoint = "index:app"' in text
-    index = (PROJECT_ROOT / "index.py").read_text(encoding="utf-8")
-    assert "app = wsgi_app" in index
+def test_api_allows_a_browser_on_another_origin():
+    server, _ = start_server()
+    try:
+        status, headers, _ = call_headers(server, "OPTIONS", "/api/tickets")
+        assert status == 204
+        assert headers.get("access-control-allow-origin") == "*"
+        assert "POST" in headers.get("access-control-allow-methods", "")
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_split_deploy_points_vercel_at_the_page_and_render_at_the_api():
+    page = (FRONTEND_DIR / "config.js").read_text(encoding="utf-8")
+    assert "multiagentsystems.onrender.com" in page
+    render = (PROJECT_ROOT / "render.yaml").read_text(encoding="utf-8")
+    assert "python scripts/serve_local.py" in render
+    vercel = (PROJECT_ROOT / "vercel.json").read_text(encoding="utf-8")
+    assert "stitch_frontend_design_prototype" in vercel
 
 
 def test_frontend_dir_is_the_stitch_folder():

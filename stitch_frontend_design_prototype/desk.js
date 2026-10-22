@@ -22,8 +22,13 @@
     }, 6000);
   }
 
+  function apiUrl(path) {
+    const base = String(window.DESK_API || "").replace(/\/$/, "");
+    return base + path;
+  }
+
   async function api(path, options) {
-    const response = await fetch(path, {
+    const response = await fetch(apiUrl(path), {
       headers: { "Content-Type": "application/json" },
       ...options,
     });
