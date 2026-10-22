@@ -1,0 +1,32 @@
+Problem Statement
+Build a multi-agent system for GROWW application (https://play.google.com/store/apps/details?id=com.nextbillion.groww&hl=en_IN)  that takes a real user question or complaint and drafts a support reply. Three specialist agents run in parallel: one finds the facts, one checks whether this is a known pattern, one checks the draft won't get you in trouble. An orchestrator merges them into a reply and an internal routing note. A reviewer blocks anything that breaks the facts-only rule before a human ever sees it.
+The problem
+A support agent answering "why was I charged an exit load" needs three things at once, and they don't come from the same place.
+The fact lives in a scheme document. Whether forty other users asked the same thing this month decides if this is a reply or an escalation. And the draft has to not give investment advice, not quote a return figure, and not repeat back a PAN the user pasted into their complaint.
+One model asked to do all three does the first and forgets the rest. It writes a fluent, uncited paragraph ending in "you may want to consider staying invested longer", which is advice, and now you have a compliance problem instead of a support ticket.
+The architecture
+
+What you build
+Input - Data is present in data folder play_store.csv.
+Three agents, in parallel - None of them waits on or reads another's output.
+Facts Agent : Retrieves the answer from your Milestone 1 corpus and returns it with one citation link. When the corpus doesn't cover it, it returns "not covered" and names what it searched. It doesn't fall back on general knowledge.
+Pattern Agent : Checks the complaint against your Milestone 2 themes. Returns whether this is recurring, rising or a one-off, with the count of reviews behind it and the window you used.
+Compliance Agent : Scans the incoming message and the outgoing draft for advice language, performance or return claims, and PII. PAN, Aadhaar, account numbers, phone numbers, emails and OTPs all get flagged and redacted before anything is stored.
+Orchestrator - Two outputs. A reply draft of three sentences or fewer, facts-only, with its citation link and a "last checked" date. And an internal routing note saying which team it goes to and why, using the Pattern Agent's signal to set priority.
+When the agents disagree, say Facts has a clean answer but Pattern shows forty people asking the same thing this week, the orchestrator says so rather than sending the reply and closing the ticket.
+Reviewer - Checks the draft before a human sees it. An uncited factual claim, anything that reads as advice, and any surviving PII are hard fails, sent back to the orchestrator once with the specific failure named. If the second attempt still fails, show the draft with the flag on it and don't offer the send.
+Refinement - The human pushes back and only the affected agents re-run. "Shorter" touches the orchestrator. "They're asking about a different scheme" touches Facts. "Check if this is the fee issue from last week" touches Pattern. Log which agents fired.
+Approval-gated MCP - Same gate as Milestone 2. Nothing moves without a human clicking approve. After approval, append the record to your doc and create the email draft. No auto-send.
+Rules
+Facts-only. No recommendations, no buy or sell language, no return or performance figures
+Every factual claim carries one citation link. No link means it doesn't ship
+No PII stored anywhere, including in logs and agent state
+Public sources only, same corpus as Milestone 1
+Three agents run in parallel, shown in your diagram and demo
+Reviewer rework capped at one round, refinement at five
+Reply drafts are three sentences or fewer with a "last checked" date
+Before you submit
+- Run 20 real complaints from your reviews CSV. Confirm all three agents returned structured output on every one, and that every reply either carries a citation or says the corpus doesn't cover it.
+- Check the branches Feed in one complaint the corpus answers cleanly, one it can't, one matching a recurring theme, and one containing a PAN or phone number. Log which agents fired on each and confirm the reviewer caught the PII.
+- Try to make it give advice Ask whether you should redeem, whether a scheme is good, what returns to expect. Rephrase, then ask again later in the same session. It should refuse every time.
+

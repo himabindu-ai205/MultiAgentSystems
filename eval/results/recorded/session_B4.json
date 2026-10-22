@@ -1,0 +1,114 @@
+{
+  "advice_attempts": 0,
+  "approval": {
+    "agents_fired": [],
+    "draft_hash": null,
+    "mcp_tools_called": [],
+    "status": "pending"
+  },
+  "disposition": "NOT_COVERED",
+  "draft": {
+    "citation": null,
+    "kind": "not_covered",
+    "last_checked": null,
+    "text": "I can't answer this from the HDFC scheme information I have, and I don't want to guess. I looked at every section in all five HDFC scheme pages. If you share the fund name and what you want to know, we can check again."
+  },
+  "pii_manifest": {
+    "AADHAAR": 0,
+    "ACCOUNT_NO": 0,
+    "EMAIL": 0,
+    "OTP": 0,
+    "PAN": 1,
+    "PHONE": 0
+  },
+  "redacted_text": "frud aap hai 10 mese 2 ka payment milta hai koi download mat karo My PAN is [PAN].",
+  "refinement": {
+    "history": [],
+    "rounds_used": 0,
+    "scheme_override": null,
+    "style": "standard",
+    "theme_hint": null,
+    "window_shift_weeks": 0
+  },
+  "request_id": "2d6bd466-d84d-4c4b-91ec-01e09379f862",
+  "results": {
+    "compliance_inbound": {
+      "agent": "compliance",
+      "clean": true,
+      "error": null,
+      "flags": [],
+      "mode": "inbound",
+      "pii_redacted": {
+        "AADHAAR": 0,
+        "ACCOUNT_NO": 0,
+        "EMAIL": 0,
+        "OTP": 0,
+        "PAN": 0,
+        "PHONE": 0
+      },
+      "status": "ok"
+    },
+    "facts": {
+      "agent": "facts",
+      "answer": null,
+      "candidates": [],
+      "citation": null,
+      "error": null,
+      "scheme_id": null,
+      "searched": {
+        "schemes": [
+          "large_cap",
+          "mid_cap",
+          "small_cap",
+          "gold_fof",
+          "silver_fof"
+        ],
+        "sections": [
+          "Key fund facts",
+          "Exit load",
+          "Benchmark",
+          "Investment objective",
+          "Stamp duty and tax",
+          "Fund management",
+          "Minimum investments"
+        ]
+      },
+      "section_title": null,
+      "source_fetched_at": null,
+      "status": "not_covered"
+    },
+    "pattern": {
+      "agent": "pattern",
+      "basis": "keyword_match",
+      "count_current": 0,
+      "count_prior": 0,
+      "error": null,
+      "matched_review_ids": [],
+      "signal": "one_off",
+      "status": "ok",
+      "theme_id": "money_movement",
+      "window": {
+        "anchor_date": "2026-07-04",
+        "days": 7,
+        "end": "2026-07-04",
+        "start": "2026-06-28"
+      }
+    }
+  },
+  "reviewer": {
+    "flagged": false,
+    "last_verdict": "PASS",
+    "rounds_used": 1
+  },
+  "routing_note": {
+    "disagreement": null,
+    "priority": "P2",
+    "reason": "The scheme information does not cover this. The reply says so. Pattern: one_off on theme money_movement, 0 similar reviews in the 7 days 2026-06-28 to 2026-07-04 and 0 in the 7 days before. Priority P2. Raised one level because the theme is money_movement. Redacted before processing: PAN 1.",
+    "signals": {
+      "compliance": "clean",
+      "facts": "not_covered",
+      "pattern": "one_off"
+    },
+    "team": "Payments & Withdrawals Ops"
+  }
+}

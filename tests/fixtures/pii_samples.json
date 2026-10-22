@@ -1,0 +1,53 @@
+{
+  "_note": "SYNTHETIC test data only. None of these values belongs to a real person. Each sample is a short complaint with one fake PII value inserted. 'raw_values' lists every value that must never appear in logs, state, prompts or outputs.",
+  "samples": [
+    {
+      "id": "pan_1",
+      "type": "PAN",
+      "text": "My withdrawal is stuck. My PAN is ABCDE1234F, please check why it failed.",
+      "raw_values": ["ABCDE1234F"]
+    },
+    {
+      "id": "phone_1",
+      "type": "PHONE",
+      "text": "Nobody calls me back. Call me on +91 98765 43210 about the pending payment.",
+      "raw_values": ["+91 98765 43210", "9876543210", "98765 43210"]
+    },
+    {
+      "id": "phone_2",
+      "type": "PHONE",
+      "text": "Order failed twice, my number is 9123456780.",
+      "raw_values": ["9123456780"]
+    },
+    {
+      "id": "email_1",
+      "type": "EMAIL",
+      "text": "Please reply at test.user@example.com, the app keeps crashing on login.",
+      "raw_values": ["test.user@example.com"]
+    },
+    {
+      "id": "aadhaar_1",
+      "type": "AADHAAR",
+      "text": "KYC is stuck. My Aadhaar number is 2345 6789 0123 and it still says pending.",
+      "raw_values": ["2345 6789 0123", "234567890123"]
+    },
+    {
+      "id": "otp_1",
+      "type": "OTP",
+      "text": "I never got money back. The OTP I received was 482913 and then it timed out.",
+      "raw_values": ["482913"]
+    },
+    {
+      "id": "account_1",
+      "type": "ACCOUNT_NO",
+      "text": "Refund is missing. My bank account number 123456789012 was debited twice.",
+      "raw_values": ["123456789012"]
+    },
+    {
+      "id": "multi_1",
+      "type": "MULTI",
+      "text": "Why was I charged an exit load? PAN ABCDE1234F, mobile 9123456780, mail test.user@example.com.",
+      "raw_values": ["ABCDE1234F", "9123456780", "test.user@example.com"]
+    }
+  ]
+}

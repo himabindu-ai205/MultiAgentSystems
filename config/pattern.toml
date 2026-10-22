@@ -1,0 +1,88 @@
+# Pattern Agent vocabulary (Architecture section 6.2, Implementation Plan Phase 3).
+#
+# Words are matched after a light stemmer (so "withdrawal", "withdrawals" and "withdraw"
+# are one word) on lower-case text. Phrases of several words are matched as phrases.
+# English and Hinglish are both listed.
+#
+# Signal thresholds (min_count, rising_ratio, window_days, baseline_weeks) live in
+# settings.toml under [pattern].
+
+# ---------------------------------------------------------------------------
+# Theme classifier. A "strong" word counts 2, a "weak" word counts 1. The theme with the
+# highest total wins. A tie goes to the theme listed first in `priority`. If no word
+# matches, a word-count model trained on the labelled reviews decides.
+# ---------------------------------------------------------------------------
+
+[classifier]
+# The rules decide only when the best theme scores at least this much, so one weak word
+# ("fund", "high") is not enough. Below it, the word-count model decides.
+min_score = 2
+priority = ["fees_brokerage", "money_movement", "reliability", "trading_charts"]
+
+[themes.trading_charts]
+strong = [
+  "chart", "candle", "candlestick", "intraday", "fno", "futures", "option", "option chain",
+  "limit order", "stop loss", "scalping", "scalper", "indicator", "strike", "expiry",
+  "square off", "bracket order", "cover order", "gtt", "slippage", "technical analysis",
+]
+weak = [
+  "buy", "sell", "order", "trade", "trading", "trader", "technical", "target", "position",
+  "execute", "execution", "commodity", "watchlist", "price", "lot", "kharidna", "bechna",
+]
+
+[themes.money_movement]
+strong = [
+  "withdraw", "withdrawal", "deposit", "payment", "upi", "refund", "debit", "credit",
+  "transfer", "wallet", "add money", "payout", "settlement", "mandate", "autopay",
+  "auto pay", "kyc", "redeem", "redemption", "nikal", "nikalna", "jama", "paisa", "paise",
+]
+weak = ["bank", "balance", "money", "amount", "sip", "mutual fund", "fund", "pay"]
+
+[themes.reliability]
+strong = [
+  "crash", "hang", "freeze", "freezing", "lag", "glitch", "bug", "slow", "loading",
+  "not working", "not opening", "server", "down", "outage", "update", "version",
+  "login", "logout", "error", "stuck", "chalta nahi", "open nahi",
+]
+weak = ["fix", "issue", "problem", "working", "properly", "interface", "performance", "load"]
+
+[themes.fees_brokerage]
+strong = [
+  "brokerage", "charge", "charges", "fee", "fees", "hidden", "mtf", "dp charge",
+  "commission", "expensive", "zero brokerage", "taxes", "gst", "stt", "kharcha",
+]
+weak = ["high", "cost", "costly", "cut", "deducted", "kaat", "kat"]
+
+# ---------------------------------------------------------------------------
+# Keyword narrowing. Terms are taken from the complaint, and a review in the theme
+# counts as "like this one" when it contains at least `need` of them.
+# ---------------------------------------------------------------------------
+
+[narrowing]
+# Use at most this many terms, the rarest first.
+max_terms = 3
+# A term must appear in at least this many reviews of the theme to count as evidence ...
+min_term_reviews = 2
+# ... and in at most this share of them (very common words say nothing).
+max_term_share = 0.25
+# A review matches when it holds at least min(need, number of terms) of the terms.
+need = 2
+# At most this many review IDs are returned as examples.
+example_ids = 20
+
+# Words that never carry meaning. English and Hinglish function words, plus words every
+# review about this app contains.
+stopwords = [
+  "the", "and", "for", "are", "was", "were", "this", "that", "with", "have", "has", "had",
+  "not", "but", "you", "your", "our", "can", "will", "would", "should", "could", "from",
+  "they", "them", "their", "its", "all", "any", "some", "more", "most", "very", "much",
+  "too", "also", "just", "even", "only", "now", "then", "than", "when", "what", "which",
+  "who", "why", "how", "please", "pls", "plz", "app", "application", "groww", "good",
+  "bad", "best", "worst", "nice", "great", "like", "get", "got", "use", "using", "used",
+  "one", "out", "off", "still", "every", "again", "dont", "don", "didn", "doesn", "isn",
+  "hai", "hain", "ka", "ki", "ke", "ko", "se", "mein", "main", "me", "nahi", "nahin",
+  "kar", "karo", "kya", "ye", "yeh", "ho", "hota", "hoti", "bhi", "toh", "aur", "par",
+  "pe", "tha", "thi", "the", "raha", "rahi", "rahe", "kuch", "bahut", "mera", "meri",
+  "mere", "aap", "apna", "apne", "liye", "jab", "tab", "koi", "wala", "wali", "hum",
+  "mai", "bas", "abhi", "kyun", "kyu", "lekin", "agar", "isko", "usko", "jo", "woh", "wo",
+]

@@ -1,0 +1,96 @@
+# Project settings (Phase 0: decisions from Architecture section 16).
+#
+# An empty string means "not decided yet". `Settings.unresolved()` lists these,
+# and code that needs one of them must fail with a clear message instead of guessing.
+
+# Folder with the input data, relative to the project root.
+data_dir = "data"
+
+[llm]
+# Default for Facts, Pattern, Compliance and the drafter. Each of those uses has its
+# own entry below, so they can differ (Architecture section 16, decision 7). The three
+# specialists only classify. The drafter only words the reply. A use that leaves its
+# own entry empty falls back to the next two lines.
+# Groq free-tier TPM is about 8k. Every Groq call is capped: a one-line label list,
+# truncated input, max_completion_tokens of 32 (classifier) or 96 (drafter), and on
+# gpt-oss reasoning_effort=low with no chain of thought. Set a use to provider = "none"
+# to skip that call and run on rules/templates alone.
+provider = "groq"
+model = "openai/gpt-oss-120b"
+
+[llm.facts]
+# Classifies the section of a scheme question. Returns a section title or nothing.
+provider = ""
+model = ""
+
+[llm.pattern]
+# Classifies the complaint into one of the five themes. Returns a theme ID or nothing.
+provider = ""
+model = ""
+
+[llm.compliance]
+# Labels text advice_request, advice_in_text, performance_claim or none.
+# Groq on this use fail-closes (COMPLIANCE_CLASSIFIER_FAILED), which produces
+# no draft at all. The phrase lists still catch advice; set groq to turn the
+# classifier back on.
+provider = "none"
+model = "none"
+
+[llm.drafter]
+# Rewords the reply from the Orchestrator's templates. Optional: the templates work alone.
+provider = ""
+model = ""
+
+[llm.reviewer]
+# Backs the Reviewer's outbound Compliance call (Phase 7). It labels a draft
+# advice_in_text, performance_claim or none, and can only make the result stricter.
+# Needs GOOGLE_API_KEY (or GEMINI_API_KEY) in .env. Set provider = "none" to run the
+# Reviewer on its deterministic rules alone.
+# The model name is a setting because Gemini model names change. Check it is available
+# to your key before relying on it.
+provider = "gemini"
+model = "gemini-3.5-flash"
+
+[llm.refinement]
+# Labels feedback the word rules do not recognise (Phase 8) as shorter, scheme_change,
+# pattern_check, compliance_concern or unclear. It chooses which agents re-run and never the
+# parameters. Needs GOOGLE_API_KEY (or GEMINI_API_KEY) in .env. Set provider = "none" to
+# use the word rules alone.
+provider = "gemini"
+model = "gemini-3.5-flash"
+
+[ui]
+# "cli" or "web". Default is the smallest option. Change if you want a web page.
+form = "cli"
+
+[mcp]
+# Required before Approve can write. The gate refuses empty values (edge case APP-11).
+# google_doc_id is the long id from the Google Doc URL (after /d/).
+# email_recipient is who the unsent Gmail draft is addressed to. Nothing is sent.
+google_doc_id = ""
+email_recipient = ""
+
+[pattern]
+# Signal thresholds for the Pattern Agent (Architecture section 6.2). Tune in Phase 3.
+# Tuning note (Phase 3, `python scripts/tune_pattern.py [min_count]`):
+# * The whole theme gets 4 to 86 reviews per week, so theme-level counts always pass 5.
+#   That is why a theme-level result can say "recurring" but never "rising".
+# * With a keyword match, a complaint finds about 0 to 3 similar reviews per week.
+#   min_count 5: one_off 618, recurring 16, rising 1 (low-rated reviews used as complaints).
+#   min_count 4: same. min_count 3: one_off 616, recurring 15, rising 4.
+# * All three signals fire at 5, so 5 is kept. If you want more "rising" on this small
+#   data set, 3 is the value to try. It is a setting, not a code change.
+min_count = 5
+rising_ratio = 1.5
+window_days = 7
+baseline_weeks = 4
+
+[limits]
+# Fixed by the problem statement.
+reviewer_rework_rounds = 1
+refinement_rounds = 5
+max_reply_sentences = 3
+# Design choice, not in the problem statement.
+agent_timeout_seconds = 30
+# Ingress rejects a complaint longer than this. It never truncates (edge case ING-04, decision D1).
+max_complaint_chars = 5000

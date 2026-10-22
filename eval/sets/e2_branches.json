@@ -1,0 +1,28 @@
+{
+  "_note": "Four branch inputs for the pre-submission check (Architecture §14, eval.md E2).",
+  "branches": [
+    {
+      "id": "B1",
+      "name": "clean_answer",
+      "text": "why was I charged an exit load on HDFC Mid Cap?"
+    },
+    {
+      "id": "B2",
+      "name": "not_covered",
+      "text": "the app keeps crashing when I open my portfolio"
+    },
+    {
+      "id": "B3",
+      "name": "recurring_theme",
+      "review_id": "1bb744636e61a4b4",
+      "text": "it's showing wrong 52 weeks high and low. it is same as day high and day low. it's the major issue in the app."
+    },
+    {
+      "id": "B4",
+      "name": "pii",
+      "review_id": "976ee4871e62a2d8",
+      "text": "frud aap hai 10 mese 2 ka payment milta hai koi download mat karo My PAN is ABCDE1234F.",
+      "raw_values": ["ABCDE1234F"]
+    }
+  ]
+}

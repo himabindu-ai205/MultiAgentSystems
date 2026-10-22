@@ -1,0 +1,138 @@
+# Facts Agent vocabulary (Architecture section 6.1, Implementation Plan Phase 2).
+#
+# Everything here is matched on lower-case text with punctuation turned into spaces,
+# on whole words only. So "mid-cap", "Mid Cap" and "mid cap" are all the same phrase.
+# Write phrases in lower case with single spaces.
+
+# ---------------------------------------------------------------------------
+# Scheme aliases. Longer, more specific phrases are safer than single words.
+# ---------------------------------------------------------------------------
+
+[schemes.large_cap]
+aliases = ["hdfc large cap", "large cap", "largecap", "large cap fund"]
+
+[schemes.mid_cap]
+aliases = ["hdfc mid cap", "mid cap", "midcap", "mid cap fund"]
+
+[schemes.small_cap]
+aliases = ["hdfc small cap", "small cap", "smallcap", "small cap fund"]
+
+[schemes.gold_fof]
+aliases = [
+  "hdfc gold", "gold etf fund of fund", "gold etf fof", "gold fund of fund",
+  "gold fof", "gold etf", "gold fund", "gold",
+]
+
+[schemes.silver_fof]
+aliases = [
+  "hdfc silver", "silver etf fund of fund", "silver etf fof", "silver fund of fund",
+  "silver fof", "silver etf", "silver fund", "silver",
+]
+
+# ---------------------------------------------------------------------------
+# Section keywords. The section whose keyword appears first in the question wins.
+# "Key fund facts" keywords come from [[key_facts]] below.
+# ---------------------------------------------------------------------------
+
+[sections]
+"Exit load" = [
+  "exit load", "exitload", "exit fee", "exit charge", "exit charges",
+  "redemption charge", "redemption charges", "redemption fee",
+]
+"Benchmark" = ["benchmark", "bench mark"]
+"Investment objective" = [
+  "investment objective", "objective", "what does it invest in",
+  "what does the fund invest in", "invests in", "aim of the fund",
+]
+"Stamp duty and tax" = [
+  "stamp duty", "tax", "taxes", "taxed", "taxation", "capital gain", "capital gains",
+  "ltcg", "stcg",
+]
+"Fund management" = [
+  "fund manager", "fund managers", "who manages", "managed by", "fund management",
+  "manager", "managers",
+]
+"Minimum investments" = [
+  "minimum investment", "minimum investments", "min investment", "minimum sip",
+  "min sip", "minimum lumpsum", "minimum lump sum", "min lumpsum", "minimum amount",
+  "minimum to invest", "minimum for", "sip amount", "lumpsum", "lump sum",
+]
+# Generic "tell me about it" questions go to the key facts block.
+"Key fund facts" = ["key facts", "fund facts", "overview", "tell me about"]
+
+# With no scheme named, a question is "ambiguous" (which scheme?) only when it clearly
+# is about a mutual fund. Otherwise it is "not covered". "Clearly" means either the first
+# matching keyword is not in `weak_keywords` ("exit load" is strong, "tax" is weak, since
+# a brokerage-tax complaint is not a fund question), or one of `context_words` is present.
+[ambiguity]
+weak_keywords = [
+  "tax", "taxes", "taxed", "taxation", "capital gain", "capital gains", "ltcg", "stcg",
+  "manager", "managers", "objective", "expense", "ter", "nav", "net asset value", "aum",
+  "category", "lumpsum", "lump sum", "minimum for", "sip amount", "overview",
+  "tell me about", "invests in",
+]
+context_words = ["mutual fund", "mutual funds", "scheme", "schemes", "hdfc", "fof"]
+
+# Questions about one item of the "Key fund facts" block. `labels` are the exact
+# labels used in that block.
+[[key_facts]]
+keywords = ["nav", "net asset value"]
+labels = ["NAV", "NAV date"]
+
+[[key_facts]]
+keywords = ["expense ratio", "expense", "ter"]
+labels = ["Expense ratio"]
+
+[[key_facts]]
+keywords = ["aum", "fund size", "assets under management"]
+labels = ["Fund size (AUM)"]
+
+[[key_facts]]
+keywords = ["riskometer", "risk level", "risk rating", "how risky"]
+labels = ["Riskometer"]
+
+[[key_facts]]
+keywords = ["category", "fund type", "type of fund"]
+labels = ["Category"]
+
+# ---------------------------------------------------------------------------
+# Returns, performance and ranking. The corpus has none of these, so with no
+# supported section in the question the answer is always "not covered".
+# ---------------------------------------------------------------------------
+
+[out_of_scope]
+phrases = [
+  "return", "returns", "cagr", "xirr", "performance", "performed", "perform",
+  "profit", "profits", "growth rate", "rank", "ranking", "rated", "rating",
+  "ratings", "best", "top performing", "outperform", "outperformed",
+  "beat the index", "beat the market",
+]
+
+# ---------------------------------------------------------------------------
+# Things that are not one of the five schemes. If the question names one of these
+# and none of the five schemes, the answer is "not covered", never "ambiguous".
+# ---------------------------------------------------------------------------
+
+[unknown]
+# Another fund house. If one appears, the question is not about the corpus.
+amcs = [
+  "sbi", "icici", "axis", "nippon", "kotak", "aditya birla", "sundaram", "tata", "uti",
+  "dsp", "mirae", "parag parikh", "ppfas", "quant", "motilal", "franklin", "invesco",
+  "bandhan", "edelweiss", "canara robeco", "hsbc", "lic", "baroda bnp",
+]
+# A fund house name only counts when one of these words follows within four words,
+# so "my SBI account" is not read as "an SBI fund".
+amc_context_words = [
+  "fund", "funds", "mutual", "mf", "cap", "index", "etf", "bluechip", "elss", "flexi",
+  "liquid", "debt", "gold", "silver", "scheme", "nifty",
+]
+# Other HDFC funds and fund types. These can contain a scheme alias ("large and mid
+# cap"), so a match here cancels an alias match that overlaps it.
+funds = [
+  "large and mid cap", "flexi cap", "focused", "value fund", "balanced advantage",
+  "elss", "tax saver", "liquid fund", "overnight fund", "index fund", "nifty 50",
+  "nifty50", "sensex", "children s fund", "retirement savings", "arbitrage",
+  "multi asset", "equity savings", "low duration", "floating rate", "top 100",
+  "capital builder", "hybrid", "debt fund", "gilt", "infrastructure", "banking and psu",
+  "silver and gold", "defence", "pharma", "technology fund", "opportunities",
+]

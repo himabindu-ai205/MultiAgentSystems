@@ -1,0 +1,20 @@
+{
+  "approval_gate_ok": true,
+  "disagreement": "HOLD_DISAGREEMENT",
+  "parallel_ok": true,
+  "refinement_cap_ok": true,
+  "refinement_log": {
+    "pattern_check": [
+      "pattern",
+      "orchestrator"
+    ],
+    "scheme_change": [
+      "facts",
+      "orchestrator"
+    ],
+    "shorter": [
+      "orchestrator"
+    ]
+  },
+  "reviewer_cap_ok": true
+}

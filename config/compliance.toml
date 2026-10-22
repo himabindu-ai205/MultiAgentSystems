@@ -1,0 +1,178 @@
+# Compliance Agent phrase lists (Architecture section 6.3, Implementation Plan Phase 4).
+#
+# Every rule is a regular expression, matched on lower-case text. `code` becomes the flag's
+# `detail`, so it must be short and contain no user text. `<VERBS>` is replaced by the verb
+# list below. `requires` is an optional second pattern that must also match somewhere in
+# the text, to keep a loose rule from firing on unrelated complaints.
+#
+# Inbound rules read what a user asks for. Outbound rules read what a reply says. They are
+# different on purpose: a refusal ("we can't give advice on whether to buy or sell") names
+# the same verbs as a question, so outbound rules look for advice *constructions*
+# ("you should sell", "we recommend", "is a good fund"), never for the bare verbs.
+
+[verbs]
+list = 'sell|sold|buy|purchase|redeem|withdraw|hold|keep|invest|switch|shift|move|exit|stop|continue|stay|remain|put|park|dump|book|average|add|increase|reduce|pause|cancel|start|go\s+for|diversify|reinvest|liquidate|stick|opt|choose|pick|select|wait|renew|top'
+
+[context]
+# Words that show a message is about a fund investment. Rules that would otherwise fire on any
+# remark about the app ("is it good?", "any recommendations?") also require one of these;
+# `invest_plus` adds trading words.
+invest = '\b(fund|funds|scheme|schemes|sip|invest\w*|units?|etf|fof|mutual|cap|gold|silver|stock|stocks|portfolio|nav)\b'
+invest_plus = '\b(fund|funds|scheme|schemes|sip|invest\w*|units?|etf|fof|mutual|stock|stocks|portfolio|nav|buy|sell|redeem\w*|withdraw\w*|market|entry|exit)\b'
+
+# ---------------------------------------------------------------------------
+# INBOUND: the user is asking for advice, an opinion, or a return figure.
+# ---------------------------------------------------------------------------
+
+[[inbound]]
+code = "rule.should_i_verb"
+pattern = '\b(should|shall|must|ought)\s+(i|we)\s+(?:\w+\s+){0,2}?(<VERBS>)\b|\b(whether|if)\s+(i|we)\s+(should|shall|must|need\s+to|ought\s+to)\s+(?:\w+\s+){0,2}?(<VERBS>)\b'
+
+[[inbound]]
+code = "rule.do_you_think"
+pattern = '\bdo\s+you\s+(think|feel|believe)\b'
+
+[[inbound]]
+code = "rule.recommend_request"
+requires = "<CONTEXT_INVEST>"
+pattern = '\b(do|would|will|can|could)\s+you\s+(also\s+)?(recommend|suggest|advise)\b|\bwhat\s+(do|would)\s+you\s+(suggest|recommend|advise)\b|\b(recommend|suggest|advise)\s+(me|us|a|an|some|any|the\s+best)\b|\bany\s+(recommendation|suggestion|advice)s?\b|\byour\s+(opinion|view|advice|recommendation|suggestion)\b|\b(need|want|seek|give|get|take|ask\w*\s+for)\s+(some\s+|your\s+)?(investment\s+|financial\s+)?advice\b'
+
+[[inbound]]
+code = "rule.is_it_good"
+pattern = '(?:^|[.?!;:,]\s*|\b(?:whether|if|kya)\s+)(is|are|was|will|would)\b[^.?!]{0,50}?\b(good|great|bad|safe|worth|worthwhile|best|better|wise|smart|ideal|profitable|reliable|secure)\b'
+requires = "<CONTEXT_INVEST>"
+
+[[inbound]]
+code = "rule.which_is_better"
+pattern = '\bwhich\b[^.?!]{0,60}?\b(better|best|safer|safest|superior|worth|outperform\w*)\b'
+
+[[inbound]]
+code = "rule.best_fund"
+pattern = '\b(best|top|good|safest|better|ideal|right)\s+(performing\s+)?(mutual\s+fund|fund|scheme|sip|investment|etf)s?\b(?!\s+(app|apps|platform|planner|calculator|tool|feature|features))'
+
+[[inbound]]
+code = "rule.good_time"
+requires = "<CONTEXT_INVEST_PLUS>"
+pattern = '\b(good|right|best|ideal|perfect|bad|safe|wrong)\s+(time|moment|opportunity)\s+(to|for)\b|\bwhen\s+(should|to|do)\s+(i\s+)?(<VERBS>)\b'
+
+[[inbound]]
+code = "rule.expected_returns"
+pattern = '\b(expected|expect(ed|ing)?|guaranteed|assured|promised|projected|estimated|likely)\s+(returns?|growth|gains?|profit|cagr|yield)\b|\b(what|how\s+much|how\s+many|which)\s+(\w+\s+){0,2}(returns?|profit|gains?|growth|cagr|interest)\b[^.?!]{0,40}\b(will|can|could|would|should|do|does|expect)\b'
+
+[[inbound]]
+code = "rule.will_it_grow"
+pattern = '\bhow\s+much\s+(will|would|can|could)\b[^.?!]{0,40}\b(grow|make|earn|become|worth|get|return|give|double)\b|\bwill\s+(it|this|the\s+fund|my\s+money|my\s+investment|the\s+scheme|\w+\s+fund|my\s+(\w+\s+){0,3}(investment|fund|units?|money|sip))\b[^.?!]{0,30}\b(grow|go\s+up|rise|give|beat|double|earn|make|return|perform|increase|multiply|cross|reach)\b|\bbeat\s+(inflation|the\s+market|the\s+index|nifty|fd|fixed\s+deposit)\b|\b(will|would|can|could)\s+(i|we|it|this|the\s+fund|my\s+money)\b[^.?!]{0,60}?\b(make|earn|gain)\s+(more\s+|some\s+|good\s+|any\s+)?(money|profit|profits|gains?)\b|\bcan\s+i\s+(earn|make|get)\s+(\w+\s+){0,2}(returns?|\d+\s*%)'
+
+# Hinglish
+[[inbound]]
+code = "rule.hinglish_chahiye"
+pattern = '\b(redeem|sell|buy|invest|hold|switch|bech\w*|khar[ei]+d\w*|nikal\w*|rakh\w*|len[aeiy]|withdraw|exit|continue|stay)\b(?:(?!\b(?:otp|pin|tpin|password|document|documents|kyc|pan|aadhaar|id)\b)[^.?!]){0,40}?\bchah(i|ie|iye|iyen|ye|ie)\b'
+
+[[inbound]]
+code = "rule.hinglish_should"
+pattern = '\bkya\b[^.?!]{0,30}\b(bech|bechun|bech\s+d(u|un|e)|khar[ei]+d\s+l(u|un)|nikal\s+l(u|un)|nikal\s+d(u|un)|redeem\s+kar\s+d(u|un)|invest\s+kar(u|un)|invest\s+kar\s+d(u|un))\b'
+
+[[inbound]]
+code = "rule.hinglish_good"
+pattern = '\b(achh?a|acch?a|achchha|behtar|better|best|safe|surakshit)\s+(hai|rahega|hoga|rahenga)\b|\b(kaun|kaunsa|kon|konsa|kaun\s+sa|kon\s+sa)\b[^.?!]{0,30}\b(achh?a|acch?a|best|better|behtar|safe)\b'
+requires = '\b(fund|scheme|sip|invest\w*|units?|etf|fof|mutual|cap|gold|silver)\b'
+
+[[inbound]]
+code = "rule.hinglish_returns"
+requires = "<CONTEXT_INVEST>"
+pattern = '\b(kitna|kitne|kitni)\s+(return|returns|profit|munafa|faida|fayda|paisa|paise)\b|\breturns?\s+(milega|milenge|aayega|ayega|hoga|milta)\b|\b(munafa|faida|fayda|profit)\s+(hoga|milega)\b|\bpaisa\s+(double|badh|badhega|grow)\b'
+
+[[inbound]]
+code = "rule.hinglish_advice"
+pattern = '\b(salah|sujhav|sujhaav)\b'
+
+# ---------------------------------------------------------------------------
+# OUTBOUND: the reply itself gives advice or makes a performance claim.
+# Percentages next to return words are handled in code (see compliance.py), because the
+# tax and fee sentences from the corpus must be allowed.
+# ---------------------------------------------------------------------------
+
+[[outbound]]
+type = "advice_in_text"
+code = "rule.you_should"
+pattern = '\byou\s+(should|must|ought\s+to|need\s+to|had\s+better|.d\s+better)\s+(?:\w+\s+){0,3}?(<VERBS>)\b'
+
+[[outbound]]
+type = "advice_in_text"
+code = "rule.you_may_want"
+pattern = '\byou\s+(may|might|could|can)\s+(also\s+)?(want|wish)\s+to\b|\byou\s+(may|might|could|can)\s+(also\s+)?consider\b'
+
+[[outbound]]
+type = "advice_in_text"
+code = "rule.we_recommend"
+pattern = '\b(i|we)\s+(would\s+|.d\s+|strongly\s+|highly\s+|also\s+)?(recommend|suggest|advise|urge|encourage)\b|\badvisable\b|\b(it\s+is|it.s)\s+(better|best|wise|safer|smarter)\s+to\b|\b(better|best|safer|wiser)\s+off\b'
+
+[[outbound]]
+type = "advice_in_text"
+code = "rule.consider"
+pattern = '\bconsider\s+(staying|holding|selling|buying|investing|switching|redeeming|exiting|continuing|moving|keeping|waiting|withdrawing|increasing|reducing)\b'
+
+[[outbound]]
+type = "advice_in_text"
+code = "rule.stay_invested"
+pattern = '\b(stay|remain|stick\s+(with|to))\s+(invested|put)\b|\bkeep\s+(holding|your\s+units|investing)\b|\bhold\s+(on\s+)?to\s+(your|the)\s+(units|investment|fund|position)\b'
+
+[[outbound]]
+type = "advice_in_text"
+code = "rule.good_fund"
+pattern = '\b(is|are|would\s+be|will\s+be|looks?|seems?|remains?)\s+(a\s+|an\s+|the\s+)?(very\s+|really\s+|quite\s+)?(good|great|excellent|best|better|safe|solid|strong|smart|wise|worthwhile|attractive|ideal)\s+(fund|scheme|investment|choice|option|pick|bet|idea|time)\b|\b(worth|worthy\s+of)\s+(investing|holding|buying|keeping|considering)\b|\b(good|great|best|right|ideal|perfect|wise)\s+(time|moment|opportunity)\s+to\b'
+
+[[outbound]]
+type = "advice_in_text"
+code = "rule.act_now"
+pattern = '\b(buy|sell|redeem|switch|hold|exit)\s+(now|today|immediately|asap)\b|(^|\byou\s+|\bplease\s+)(don.?t|do\s+not|never)\s+(sell|redeem|panic|exit|withdraw)\b'
+
+[[outbound]]
+type = "performance_claim"
+code = "rule.forward_looking"
+pattern = '\b(will|would|going\s+to|is\s+likely\s+to|are\s+likely\s+to|is\s+expected\s+to|are\s+expected\s+to|is\s+set\s+to|is\s+bound\s+to|can\s+be\s+expected\s+to)\s+(?:\w+\s+){0,2}?(give|grow|rise|return|deliver|earn|generate|outperform|beat|double|appreciate|go\s+up|yield|perform|gain|multiply|profit)\b'
+
+[[outbound]]
+type = "performance_claim"
+code = "rule.expected_returns"
+pattern = '\b(expected|projected|estimated|anticipated|forecast|forecasted|guaranteed|assured|promised|potential)\s+(returns?|growth|gains?|profit|cagr|yield|performance)\b'
+
+[[outbound]]
+type = "performance_claim"
+code = "rule.guarantee"
+pattern = '(?<!not\s)(?<!cannot\s)(?<!n.t\s)(?<!never\s)(?<!no\s)\bguarantee[sd]?\b|\brisk[- ]?free\b|\bno\s+risk\b|\bdouble\s+(your|the)\s+money\b|\bcapital\s+protected\b'
+
+[[outbound]]
+type = "performance_claim"
+code = "rule.beat_market"
+pattern = '\bbeat(s|en|ing)?\s+(inflation|the\s+market|the\s+index|nifty|the\s+benchmark|fd|fixed\s+deposits?)\b|\boutperform(ed|s|ing)?\b|\bunderperform(ed|s|ing)?\b'
+
+[[outbound]]
+type = "performance_claim"
+code = "rule.has_delivered"
+pattern = '\b(has|have)\s+(given|delivered|generated|returned|earned|yielded)\b'
+
+[[outbound]]
+type = "performance_claim"
+code = "rule.good_returns"
+pattern = '\b(high|good|great|better|best|strong|stable|steady|consistent|attractive|decent|healthy|solid|superior|impressive|excellent|negative|poor|low)\s+(returns?|growth|performance|cagr|gains?)\b'
+
+[[outbound]]
+type = "performance_claim"
+code = "rule.n_year_returns"
+pattern = '\b\d+\s*-?\s*(year|yr|y|month|mo|m)s?\s*(returns?|cagr|growth|performance)\b|\b(returns?|cagr|growth|performance)\s+(of|at|around|about|upto|up\s+to|over)\s+\d'
+
+[[outbound]]
+type = "performance_claim"
+code = "rule.ranking"
+pattern = '\b(top|best)[- ]performing\b|\branked?\s+(#?\d|first|top|number\s+one)\b|\b(\d|five|four)[- ]star\s+(rated|rating|fund)\b'
+
+# ---------------------------------------------------------------------------
+# Percentages. A percentage is a performance claim only if it sits next to a return word
+# and is not a tax or fee figure. `fee_context` lists what may stand in front of a figure
+# that is NOT a return ("taxed at 20%", "exit load of 1%", "expense ratio: 0.75%").
+# ---------------------------------------------------------------------------
+
+[percent]
+return_words = '\b(returns?|growth|grow\w*|cagr|xirr|gains?|profits?|appreciat\w+|yield\w*|performance|performed|delivered|earn\w*)\b'
+fee_context = '\b(taxed|tax|taxable|tax\s+rate)\s*(at|of|@|is|:)?\s*$|\b(exit\s+load|expense\s+ratio|stamp\s+duty|brokerage|charges?|fees?|ter|load)\b[^%]{0,30}$'

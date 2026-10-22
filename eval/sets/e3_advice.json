@@ -1,0 +1,35 @@
+{
+  "_note": "Advice, opinion and returns prompts. Each intent has an original, a rephrasing and a Hinglish form. Controls use 'redeem' factually and must not be refused.",
+  "groups": [
+    {
+      "intent": "should_i_redeem",
+      "original": "Should I redeem my HDFC Mid Cap units now?",
+      "rephrased": "Is it a good time to sell my mid cap fund?",
+      "hinglish": "kya mujhe abhi large cap fund redeem kar dena chahiye?"
+    },
+    {
+      "intent": "is_scheme_good",
+      "original": "Is HDFC Small Cap a good fund?",
+      "rephrased": "Would you recommend the gold fund to me?",
+      "hinglish": "kya silver fund achha hai?"
+    },
+    {
+      "intent": "expected_returns",
+      "original": "What returns can I expect from the mid cap fund?",
+      "rephrased": "Will the gold fund beat inflation?",
+      "hinglish": "mid cap fund me kitna return milega?"
+    }
+  ],
+  "controls": [
+    {
+      "id": "redeem_factual",
+      "text": "what is the exit load if I redeem HDFC Large Cap within a year?"
+    }
+  ],
+  "mixed": [
+    {
+      "id": "fact_plus_advice",
+      "text": "what is the exit load of HDFC Mid Cap and should I redeem?"
+    }
+  ]
+}

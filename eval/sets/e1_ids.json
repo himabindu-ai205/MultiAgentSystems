@@ -1,0 +1,181 @@
+{
+  "seed": 20261021,
+  "reviews": [
+    {
+      "id": "b3410d60f154bb03",
+      "theme": "money_movement",
+      "rating": 1,
+      "chars": 461,
+      "tags": [
+        "fees",
+        "hinglish",
+        "kyc",
+        "long"
+      ]
+    },
+    {
+      "id": "8895cb5408457c4f",
+      "theme": "trading_charts",
+      "rating": 1,
+      "chars": 361,
+      "tags": [
+        "fees",
+        "hinglish",
+        "long"
+      ]
+    },
+    {
+      "id": "bca57a154cfad07f",
+      "theme": "money_movement",
+      "rating": 1,
+      "chars": 248,
+      "tags": [
+        "hinglish",
+        "kyc",
+        "long"
+      ]
+    },
+    {
+      "id": "17b590b26f77b9de",
+      "theme": "other",
+      "rating": 1,
+      "chars": 39,
+      "tags": [
+        "hinglish",
+        "short"
+      ]
+    },
+    {
+      "id": "70ac95c277da9038",
+      "theme": "trading_charts",
+      "rating": 1,
+      "chars": 37,
+      "tags": [
+        "short"
+      ]
+    },
+    {
+      "id": "891cfab96fdf8f04",
+      "theme": "trading_charts",
+      "rating": 1,
+      "chars": 60,
+      "tags": [
+        "kyc"
+      ]
+    },
+    {
+      "id": "b172ba3eafdf523c",
+      "theme": "trading_charts",
+      "rating": 2,
+      "chars": 64,
+      "tags": []
+    },
+    {
+      "id": "b372b9f56865dbd1",
+      "theme": "money_movement",
+      "rating": 1,
+      "chars": 99,
+      "tags": []
+    },
+    {
+      "id": "0eee30838a69040d",
+      "theme": "money_movement",
+      "rating": 1,
+      "chars": 424,
+      "tags": [
+        "fees",
+        "kyc",
+        "long"
+      ]
+    },
+    {
+      "id": "30345143581ab947",
+      "theme": "reliability",
+      "rating": 1,
+      "chars": 44,
+      "tags": []
+    },
+    {
+      "id": "5e7bc6607fe16d47",
+      "theme": "reliability",
+      "rating": 2,
+      "chars": 124,
+      "tags": []
+    },
+    {
+      "id": "1456707c2e07be6f",
+      "theme": "reliability",
+      "rating": 3,
+      "chars": 106,
+      "tags": []
+    },
+    {
+      "id": "f94555975646e529",
+      "theme": "reliability",
+      "rating": 1,
+      "chars": 60,
+      "tags": []
+    },
+    {
+      "id": "9c384c5c3296a9c5",
+      "theme": "fees_brokerage",
+      "rating": 3,
+      "chars": 47,
+      "tags": [
+        "fees"
+      ]
+    },
+    {
+      "id": "dd3d6a38ce54641d",
+      "theme": "fees_brokerage",
+      "rating": 1,
+      "chars": 453,
+      "tags": [
+        "fees",
+        "long"
+      ]
+    },
+    {
+      "id": "814f077d234392f4",
+      "theme": "fees_brokerage",
+      "rating": 1,
+      "chars": 336,
+      "tags": [
+        "fees",
+        "long"
+      ]
+    },
+    {
+      "id": "acb1e7bfeece83e5",
+      "theme": "fees_brokerage",
+      "rating": 2,
+      "chars": 126,
+      "tags": [
+        "fees"
+      ]
+    },
+    {
+      "id": "a6424de51d298c26",
+      "theme": "other",
+      "rating": 3,
+      "chars": 58,
+      "tags": [
+        "hinglish"
+      ]
+    },
+    {
+      "id": "8d2fc5ed86bb3cd8",
+      "theme": "other",
+      "rating": 1,
+      "chars": 59,
+      "tags": []
+    },
+    {
+      "id": "a78672637990a8de",
+      "theme": "other",
+      "rating": 1,
+      "chars": 103,
+      "tags": []
+    }
+  ]
+}

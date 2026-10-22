@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HDFC Mutual Fund FAQ Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --page: #f3efe6;
+      --card: #fffcf7;
+      --ink: #16332c;
+      --muted: #6b7872;
+      --teal: #0d5c4d;
+      --teal-soft: #e4f0ea;
+      --teal-text: #1a6b58;
+      --line: #e4ddd0;
+      --badge: #f7ebc8;
+      --badge-ink: #8a6410;
+      --error: #b42318;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font: 15px/1.5 "IBM Plex Sans", sans-serif;
+    }
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 36px 24px 28px;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    h1 {
+      margin: 0 0 28px;
+      text-align: center;
+      font: 600 28px/1.2 "Source Serif 4", Georgia, serif;
+      color: var(--teal);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+      gap: 20px;
+      flex: 1;
+      min-height: 0;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 1px 2px rgba(22, 51, 44, 0.04);
+    }
+    .welcome { padding: 28px 28px 24px; }
+    .welcome h2 {
+      margin: 0 0 8px;
+      font: 600 28px/1.2 "Source Serif 4", Georgia, serif;
+    }
+    .welcome p { margin: 0; color: var(--muted); }
+    .kicker {
+      margin: 22px 0 10px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .chip {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--teal-soft);
+      color: var(--teal-text);
+      font: 500 14px/1.35 "IBM Plex Sans", sans-serif;
+      text-align: left;
+      cursor: pointer;
+    }
+    .chip:hover { filter: brightness(0.97); }
+    .right {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 0;
+    }
+    .answers {
+      flex: 1;
+      min-height: 320px;
+      padding: 28px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .empty {
+      margin: auto;
+      max-width: 420px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      background: #eef3ef;
+      color: #9aa8a1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .empty h2 {
+      margin: 0 0 8px;
+      font: 600 26px/1.2 "Source Serif 4", Georgia, serif;
+      color: var(--ink);
+    }
+    .empty p { margin: 0 0 16px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--badge);
+      color: var(--badge-ink);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .desk-turn { display: grid; gap: 8px; }
+    .desk-user {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--teal);
+    }
+    .desk-bot {
+      padding: 16px 0 4px;
+      border-top: 1px solid var(--line);
+    }
+    .desk-draft { margin: 0 0 8px; }
+    .desk-meta { margin: 0; font-size: 12px; color: var(--muted); }
+    .desk-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .desk-actions button {
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--ink);
+      font: 600 12px "IBM Plex Sans", sans-serif;
+      cursor: pointer;
+    }
+    .desk-actions .desk-approve {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+    }
+    .desk-actions .desk-discard {
+      margin-left: auto;
+      color: var(--error);
+      border: 0;
+      background: none;
+    }
+    .desk-status { margin: 0; font-size: 13px; color: var(--muted); }
+    .composer { padding: 16px 16px 12px; }
+    #desk-input {
+      width: 100%;
+      min-height: 88px;
+      resize: none;
+      border: 0;
+      outline: none;
+      background: transparent;
+      font: 15px/1.45 "IBM Plex Sans", sans-serif;
+      color: var(--ink);
+    }
+    .composer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .hint {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    #desk-send {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 40px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--teal);
+      color: #fff;
+      font: 600 14px "IBM Plex Sans", sans-serif;
+      cursor: pointer;
+    }
+    #desk-send:hover { filter: brightness(1.08); }
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .page { padding: 20px 16px; }
+      h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>HDFC Mutual Fund FAQ Assistant</h1>
+    <div class="layout">
+      <aside>
+        <section class="card welcome">
+          <h2>Welcome.</h2>
+          <p>Ask questions about five HDFC schemes: Large Cap, Mid Cap, Small Cap, Gold FoF, and Silver FoF.</p>
+        </section>
+        <p class="kicker">Example questions</p>
+        <button type="button" class="chip" data-example="What is the expense ratio of HDFC Large Cap Fund Direct Growth?">What is the expense ratio of HDFC Large Cap Fund Direct Growth?</button>
+        <button type="button" class="chip" data-example="What is the exit load of HDFC Gold ETF Fund of Fund?">What is the exit load of HDFC Gold ETF Fund of Fund?</button>
+        <button type="button" class="chip" data-example="What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?">What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?</button>
+      </aside>
+      <div class="right">
+        <div class="card answers" id="desk-thread">
+          <div class="empty" id="desk-empty">
+            <div class="empty-icon" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-5 4v-4.5A2.5 2.5 0 0 1 4 13.5v-7Z"/>
+              </svg>
+            </div>
+            <h2>Answers appear here.</h2>
+            <p>Each reply includes one source link and a last-updated date. Previous questions stay visible above.</p>
+            <span class="badge">Facts-only. No investment advice.</span>
+          </div>
+        </div>
+        <div class="card composer">
+          <textarea id="desk-input" placeholder="Type a factual question about an in-scope HDFC scheme…"></textarea>
+          <div class="composer-bar">
+            <p class="hint">Only a question is sent. Do not enter PAN, Aadhaar, account numbers, OTP, email, or phone.</p>
+            <button id="desk-send" type="button">Ask <span aria-hidden="true">▶</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/desk.js?v=6"></script>
+</body>
+</html>
