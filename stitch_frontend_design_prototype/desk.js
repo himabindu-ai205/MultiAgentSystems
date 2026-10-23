@@ -218,7 +218,7 @@
     });
     const title = $("sheet-title");
     const question = ((wrap.querySelector(".desk-user") || {}).textContent || "").trim();
-    if (title) title.textContent = question || "The reply sits here";
+    if (title) title.textContent = question || "Ask a scheme question";
     setEmpty(false);
     const button = railButton(wrap);
     if (button && button.scrollIntoView) button.scrollIntoView({ block: "nearest" });
@@ -398,7 +398,7 @@
     if (lastTurn && wasOpen) selectTurn(lastTurn);
     else if (!lastTurn) {
       const title = $("sheet-title");
-      if (title) title.textContent = "The reply sits here";
+      if (title) title.textContent = "Ask a scheme question";
     }
   }
 
