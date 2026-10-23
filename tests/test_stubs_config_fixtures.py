@@ -109,11 +109,10 @@ def test_the_default_model_fills_in_any_use_that_leaves_its_own_empty():
     assert settings.llm.for_use("reviewer").provider == "groq"
 
 
-def test_the_reviewer_has_its_own_model_entry_and_the_project_uses_gemini_for_it():
+def test_the_reviewer_has_its_own_model_entry_and_the_project_uses_rules_for_it():
     assert "reviewer" in LLM_USES
     chosen = load_settings().llm.for_use("reviewer")
-    assert chosen.provider == "gemini"
-    assert chosen.model.startswith("gemini-")
+    assert chosen.provider == "none"
 
 
 def _settings_from(tmp_path, text):

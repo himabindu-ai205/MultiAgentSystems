@@ -76,7 +76,11 @@
     row.querySelector(".desk-refine").textContent = "Refine (" + left + " left)";
     row.querySelector(".desk-approve").hidden = !controls.includes("approve");
     row.querySelector(".desk-approve").textContent = "Approve";
-    row.querySelector(".desk-discard").hidden = !controls.includes("discard");
+    row.querySelector(".desk-discard").hidden = false;
+  }
+
+  function bindDiscard(button, turn) {
+    button.addEventListener("click", () => discard(turn));
   }
 
   function makeBotCard(view, message) {
@@ -94,7 +98,6 @@
     fillBot(row, view, message);
     row.querySelector(".desk-refine").addEventListener("click", () => refine());
     row.querySelector(".desk-approve").addEventListener("click", () => approve());
-    row.querySelector(".desk-discard").addEventListener("click", () => discard());
     return row;
   }
 
@@ -109,14 +112,27 @@
   let lastComplaint = "";
   let lastTurn = null;
 
+  function freezeOlderTurns() {
+    const box = thread();
+    if (!box) return;
+    box.querySelectorAll(".desk-turn").forEach((turn) => {
+      turn.querySelectorAll(".desk-refine, .desk-approve").forEach((button) => {
+        button.hidden = true;
+      });
+    });
+  }
+
   function appendTurn(userText, view, message) {
     const box = thread();
     if (!box) return;
     setEmpty(false);
+    freezeOlderTurns();
     const wrap = document.createElement("div");
     wrap.className = "desk-turn";
+    const bot = makeBotCard(view, message);
     wrap.appendChild(makeUserRow(userText));
-    wrap.appendChild(makeBotCard(view, message));
+    wrap.appendChild(bot);
+    bindDiscard(bot.querySelector(".desk-discard"), wrap);
     box.appendChild(wrap);
     box.scrollTop = box.scrollHeight;
     lastTurn = wrap;
@@ -130,6 +146,7 @@
     }
     const old = lastTurn.querySelector(".desk-bot");
     const next = makeBotCard(view, message);
+    bindDiscard(next.querySelector(".desk-discard"), lastTurn);
     if (old) lastTurn.replaceChild(next, old);
     else lastTurn.appendChild(next);
     const box = thread();
@@ -201,7 +218,30 @@
   function showApproved(turn) {
     const actions = turn && turn.querySelector(".desk-actions");
     if (!actions) return;
-    actions.innerHTML = '<p class="desk-status">Approved. Nothing was sent.</p>';
+    actions.innerHTML =
+      '<p class="desk-status">Approved. Nothing was sent.</p>' +
+      '<button type="button" class="desk-discard">Discard</button>';
+    bindDiscard(actions.querySelector(".desk-discard"), turn);
+  }
+
+  async function discard(turn) {
+    const target = turn || lastTurn;
+    if (!target || busy) return;
+    const current = target === lastTurn;
+    if (current) {
+      try {
+        await api("/api/tickets/current/discard", { method: "POST", body: "{}" });
+      } catch (error) {
+        const msg = (error.data && error.data.error) || error.message || "";
+        if (!/no open ticket|closed/i.test(msg)) {
+          toast(msg, "error");
+          return;
+        }
+      }
+    }
+    target.remove();
+    rememberLastTurn();
+    toast("Removed from the chat.");
   }
 
   async function approve() {
@@ -225,21 +265,6 @@
       ? ((lastTurn.querySelector(".desk-user") || {}).textContent || "")
       : "";
     setEmpty(!lastTurn);
-  }
-
-  async function discard() {
-    if (busy) return;
-    try {
-      await api("/api/tickets/current/discard", { method: "POST", body: "{}" });
-    } catch (error) {
-      if (!(error.data && error.data.error === "no open ticket")) {
-        toast(error.message, "error");
-        return;
-      }
-    }
-    if (lastTurn) lastTurn.remove();
-    rememberLastTurn();
-    toast("Removed from the chat.");
   }
 
   function bind() {

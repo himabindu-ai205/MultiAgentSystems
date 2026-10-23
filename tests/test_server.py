@@ -169,8 +169,12 @@ def test_refine_and_discard_follow_the_cli_controls():
         assert data["refinements_left"] == 4
         status, data = call(server, "POST", "/api/tickets/current/discard", {})
         assert status == 200
-        assert data["view"]["closed"] is True
-        assert "discard" not in data["view"]["controls"]
+        assert data["message"].startswith("The ticket was discarded")
+        assert data["view"] is None
+        status, data = call(server, "GET", "/api/tickets/current")
+        assert status == 404
+        status, data = call(server, "POST", "/api/tickets/current/discard", {})
+        assert status == 200
     finally:
         server.shutdown()
         server.server_close()

@@ -44,12 +44,11 @@ model = ""
 [llm.reviewer]
 # Backs the Reviewer's outbound Compliance call (Phase 7). It labels a draft
 # advice_in_text, performance_claim or none, and can only make the result stricter.
-# Needs GOOGLE_API_KEY (or GEMINI_API_KEY) in .env. Set provider = "none" to run the
-# Reviewer on its deterministic rules alone.
-# The model name is a setting because Gemini model names change. Check it is available
-# to your key before relying on it.
-provider = "gemini"
-model = "gemini-3.5-flash"
+# Gemini on this use fail-closes (COMPLIANCE_CHECK_FAILED) and, after the one
+# rework, flags the draft so Approve is withheld. The phrase lists still catch
+# advice; set gemini to turn the classifier back on.
+provider = "none"
+model = "none"
 
 [llm.refinement]
 # Labels feedback the word rules do not recognise (Phase 8) as shorter, scheme_change,

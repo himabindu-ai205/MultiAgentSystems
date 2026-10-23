@@ -24,7 +24,7 @@ from app import APPROVE_UNAVAILABLE, APPROVE_UNCONNECTED, DISCARDED, App, build_
 from config import Settings, load_settings
 from ingress.redactor import IngressError
 from paths import PROJECT_ROOT
-from refinement.view import APPROVE, DISCARD, REFINE, RETRY, HumanView, build_view
+from refinement.view import APPROVE, REFINE, RETRY, HumanView, build_view
 
 FRONTEND_DIR = PROJECT_ROOT / "stitch_frontend_design_prototype"
 DEFAULT_HOST = "127.0.0.1"
@@ -277,17 +277,12 @@ def make_handler(desk: Desk, static_root: Path, *, pages: bool = True) -> type[B
 
         def _discard(self) -> None:
             with desk._lock:
-                if desk.session is None:
-                    self._json(HTTPStatus.NOT_FOUND, {"error": "no open ticket"})
-                    return
-                if DISCARD not in (desk.view().controls if desk.view() else ()):
-                    self._json(HTTPStatus.CONFLICT, {"error": "This ticket is closed."})
-                    return
-                desk.app.refiner.discard(desk.session)
-                desk.notice = DISCARDED
-                view = desk.view()
-            assert view is not None
-            self._json(HTTPStatus.OK, {"message": DISCARDED, "view": view_payload(view)})
+                if desk.session is not None:
+                    desk.app.refiner.discard(desk.session)
+                desk.session = None
+                desk.run = None
+                desk.notice = None
+            self._json(HTTPStatus.OK, {"message": DISCARDED, "view": None})
 
         def _json(self, status: HTTPStatus, payload: dict[str, Any]) -> None:
             body = json.dumps(payload, ensure_ascii=True).encode("utf-8")

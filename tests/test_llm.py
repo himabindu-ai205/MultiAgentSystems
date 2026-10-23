@@ -441,11 +441,11 @@ def test_the_reviewer_built_here_logs_through_the_allow_list(data):
     assert KEY not in json.dumps(records)
 
 
-def test_the_real_settings_choose_gemini_for_the_reviewer(data):
+def test_the_real_settings_run_the_reviewer_on_its_rules_alone(data):
     chosen = load_settings().llm.for_use("reviewer")
-    assert chosen.provider == "gemini"
-    with pytest.raises(RuntimeError, match="GOOGLE_API_KEY"):
-        build_reviewer(load_settings(), corpus=data.corpus, environ={})
+    assert chosen.provider == "none"
+    reviewer = build_reviewer(load_settings(), corpus=data.corpus, environ={})
+    assert reviewer(handoff(GOOD)).verdict == "PASS"
 
 
 # ---------------------------------------------------------------------------
@@ -464,7 +464,7 @@ def _live_key() -> str | None:
 @pytest.mark.live
 @pytest.mark.skipif(not _live_key(), reason="no GOOGLE_API_KEY or GEMINI_API_KEY available")
 def test_live_gemini_labels_a_clean_fact_none_and_advice_as_advice():
-    model = load_settings().llm.for_use("reviewer").model
+    model = load_settings().llm.for_use("refinement").model
     live = GeminiAdviceClassifier(_live_key(), model)
     try:
         assert live.classify(GOOD, mode="outbound") == "none"
