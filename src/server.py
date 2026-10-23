@@ -99,7 +99,7 @@ def _safe_static(root: Path, url_path: str) -> Path | None:
     return target if target.is_file() else None
 
 
-def make_handler(desk: Desk, static_root: Path) -> type[BaseHTTPRequestHandler]:
+def make_handler(desk: Desk, static_root: Path, *, pages: bool = True) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, format: str, *args: object) -> None:
             sys.stderr.write("%s - %s\n" % (self.address_string(), format % args))
@@ -122,6 +122,9 @@ def make_handler(desk: Desk, static_root: Path) -> type[BaseHTTPRequestHandler]:
                 return
             if path == "/api/tickets/current":
                 self._current()
+                return
+            if not pages:
+                self._json(HTTPStatus.NOT_FOUND, {"error": "This host is the API only."})
                 return
             self._static(path)
 
@@ -299,6 +302,11 @@ def make_handler(desk: Desk, static_root: Path) -> type[BaseHTTPRequestHandler]:
     return Handler
 
 
+def pages_enabled() -> bool:
+    """Render sets SERVE_FRONTEND=0 so the public URL is the API only."""
+    return os.environ.get("SERVE_FRONTEND", "1").strip().lower() not in {"0", "false", "no"}
+
+
 def serve(
     *,
     app: App | None = None,
@@ -306,15 +314,17 @@ def serve(
     host: str = DEFAULT_HOST,
     port: int = DEFAULT_PORT,
     static_root: Path | None = None,
+    pages: bool | None = None,
 ) -> ThreadingHTTPServer:
     """Build the desk (unless ``app`` is given) and start serving. Returns the server."""
     chosen = settings or load_settings()
     built = app if app is not None else build_app(chosen)
+    show_pages = pages_enabled() if pages is None else pages
     root = static_root or FRONTEND_DIR
-    if not root.is_dir():
+    if show_pages and not root.is_dir():
         raise RuntimeError(f"frontend folder is missing: {root}")
     desk = Desk(built)
-    server = ThreadingHTTPServer((host, port), make_handler(desk, root))
+    server = ThreadingHTTPServer((host, port), make_handler(desk, root, pages=show_pages))
     return server
 
 
@@ -392,8 +402,11 @@ def main(argv: list[str] | None = None) -> int:
     except (RuntimeError, ValueError) as error:
         print(str(error), file=sys.stderr)
         return 1
-    print(f"Frontend (Stitch):  http://{host}:{port}/", flush=True)
-    print(f"Backend workbench:  http://{host}:{port}/workbench", flush=True)
+    if pages_enabled():
+        print(f"Frontend (Stitch):  http://{host}:{port}/", flush=True)
+        print(f"Backend workbench:  http://{host}:{port}/workbench", flush=True)
+    else:
+        print("Pages are off. This process serves the API only.", flush=True)
     print(f"API health:         http://{host}:{port}/api/health", flush=True)
     try:
         server.serve_forever()

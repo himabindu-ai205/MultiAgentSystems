@@ -243,8 +243,28 @@ def test_split_deploy_points_vercel_at_the_page_and_render_at_the_api():
     assert "multiagentsystems.onrender.com" in page
     render = (PROJECT_ROOT / "render.yaml").read_text(encoding="utf-8")
     assert "python scripts/serve_local.py" in render
+    assert 'SERVE_FRONTEND' in render and '"0"' in render
     vercel = (PROJECT_ROOT / "vercel.json").read_text(encoding="utf-8")
     assert "stitch_frontend_design_prototype" in vercel
+
+
+def test_render_mode_serves_the_api_and_not_the_page():
+    desk = Desk(stub_app())
+    server = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(desk, FRONTEND_DIR, pages=False))
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        status, body = call(server, "GET", "/")
+        assert status == 404
+        assert body["error"] == "This host is the API only."
+        assert b"HDFC" not in json.dumps(body).encode()
+        status, data = call(server, "GET", "/api/health")
+        assert status == 200 and data["ok"] is True
+        status, data = call(server, "POST", "/api/tickets", {"complaint": QUESTION})
+        assert status == 200 and data["complaint"] == QUESTION
+    finally:
+        server.shutdown()
+        server.server_close()
 
 
 def test_frontend_dir_is_the_stitch_folder():
