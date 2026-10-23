@@ -50,23 +50,31 @@
     if (empty) empty.hidden = !show;
   }
 
-  function passed(view) {
-    return !!(view && view.verdict === "PASS" && view.draft_text && !view.flagged);
-  }
-
   function fillBot(row, view, message) {
+    const draft = view && view.draft_text;
+    row.querySelector(".desk-draft").textContent =
+      draft ||
+      (view && view.routing_reason) ||
+      message ||
+      "No draft. A person needs to look at this ticket.";
     const source = view && view.citation ? view.citation : "";
     const checked = view && view.last_checked ? "Last checked " + view.last_checked : "";
-    const ok = passed(view);
-    row.querySelector(".desk-draft").textContent = ok
-      ? view.draft_text
-      : "The reviewer has not passed this reply yet.";
-    row.querySelector(".desk-meta").textContent = ok ? [source, checked].filter(Boolean).join(" · ") : "";
+    row.querySelector(".desk-meta").textContent = draft
+      ? [source, checked].filter(Boolean).join(" · ")
+      : "";
+    const verdict = view && view.verdict ? view.verdict : "NOT REVIEWED";
+    const reasons = view && view.failure_types && view.failure_types.length
+      ? " · " + view.failure_types.join(", ")
+      : "";
+    const review = view && view.flagged
+      ? "Reviewer: FLAG — this draft cannot be approved." + reasons
+      : "Reviewer: " + verdict + reasons;
+    row.querySelector(".desk-verdict").textContent = review;
     const controls = (view && view.controls) || [];
     const left = view && typeof view.refinements_left === "number" ? view.refinements_left : 0;
     row.querySelector(".desk-refine").hidden = !controls.includes("refine");
     row.querySelector(".desk-refine").textContent = "Refine (" + left + " left)";
-    row.querySelector(".desk-approve").hidden = !ok;
+    row.querySelector(".desk-approve").hidden = !controls.includes("approve");
     row.querySelector(".desk-approve").textContent = "Approve";
     row.querySelector(".desk-discard").hidden = !controls.includes("discard");
   }
@@ -77,6 +85,7 @@
     row.innerHTML =
       '<p class="desk-draft"></p>' +
       '<p class="desk-meta"></p>' +
+      '<p class="desk-verdict"></p>' +
       '<div class="desk-actions">' +
       '<button type="button" class="desk-refine">Refine</button>' +
       '<button type="button" class="desk-approve">Approve</button>' +

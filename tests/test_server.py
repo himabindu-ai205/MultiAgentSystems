@@ -75,6 +75,9 @@ def test_health_and_stitch_frontend_are_served():
         status, script = call(server, "GET", "/desk.js")
         assert status == 200 and b"Welcome." in body
         assert b"function send" in script or b"async function send" in script
+        assert b"The reviewer has not passed this reply yet." not in script
+        assert b"Reviewer:" in script
+        assert b"!controls.includes(\"approve\")" in script
         status, body = call(server, "GET", "/workbench")
         assert status == 200 and b"Run agents" in body
     finally:
