@@ -76,6 +76,7 @@
     row.querySelector(".desk-refine").textContent = "Refine (" + left + " left)";
     row.querySelector(".desk-approve").hidden = !controls.includes("approve");
     row.querySelector(".desk-approve").textContent = "Approve";
+    row.querySelector(".desk-retry").hidden = !controls.includes("retry");
     row.querySelector(".desk-discard").hidden = false;
   }
 
@@ -93,11 +94,13 @@
       '<div class="desk-actions">' +
       '<button type="button" class="desk-refine">Refine</button>' +
       '<button type="button" class="desk-approve">Approve</button>' +
+      '<button type="button" class="desk-retry">Retry write</button>' +
       '<button type="button" class="desk-discard">Discard</button>' +
       "</div>";
     fillBot(row, view, message);
     row.querySelector(".desk-refine").addEventListener("click", () => refine());
     row.querySelector(".desk-approve").addEventListener("click", () => approve());
+    row.querySelector(".desk-retry").addEventListener("click", () => retryWrite());
     return row;
   }
 
@@ -116,7 +119,7 @@
     const box = thread();
     if (!box) return;
     box.querySelectorAll(".desk-turn").forEach((turn) => {
-      turn.querySelectorAll(".desk-refine, .desk-approve").forEach((button) => {
+      turn.querySelectorAll(".desk-refine, .desk-approve, .desk-retry").forEach((button) => {
         button.hidden = true;
       });
     });
@@ -215,11 +218,13 @@
     }
   }
 
-  function showApproved(turn) {
+  function showApproved(turn, message) {
     const actions = turn && turn.querySelector(".desk-actions");
     if (!actions) return;
     actions.innerHTML =
-      '<p class="desk-status">Approved. Nothing was sent.</p>' +
+      '<p class="desk-status">' +
+      (message || "Approved. Nothing was sent.") +
+      "</p>" +
       '<button type="button" class="desk-discard">Discard</button>';
     bindDiscard(actions.querySelector(".desk-discard"), turn);
   }
@@ -247,14 +252,24 @@
   async function approve() {
     if (busy) return;
     try {
-      await api("/api/tickets/current/approve", { method: "POST", body: "{}" });
-      showApproved(lastTurn);
+      const data = await api("/api/tickets/current/approve", { method: "POST", body: "{}" });
+      showApproved(lastTurn, data.message);
     } catch (error) {
-      if (/isn't available/i.test(error.message || "")) {
-        toast(error.message, "error");
-        return;
-      }
-      showApproved(lastTurn);
+      const view = error.data && error.data.view;
+      if (view) replaceDraft(view, error.message);
+      toast(error.message || "Approve failed.", "error");
+    }
+  }
+
+  async function retryWrite() {
+    if (busy) return;
+    try {
+      const data = await api("/api/tickets/current/retry", { method: "POST", body: "{}" });
+      showApproved(lastTurn, data.message);
+    } catch (error) {
+      const view = error.data && error.data.view;
+      if (view) replaceDraft(view, error.message);
+      toast(error.message || "Retry failed.", "error");
     }
   }
 

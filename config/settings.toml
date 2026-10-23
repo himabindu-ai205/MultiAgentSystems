@@ -4,6 +4,7 @@
 # and code that needs one of them must fail with a clear message instead of guessing.
 
 # Folder with the input data, relative to the project root.
+
 data_dir = "data"
 
 [llm]
@@ -64,10 +65,13 @@ form = "cli"
 
 [mcp]
 # Required before Approve can write. The gate refuses empty values (edge case APP-11).
-# google_doc_id is the long id from the Google Doc URL (after /d/).
+# google_doc_id is the long id from the Google Doc URL (after /d/), not the full URL.
 # email_recipient is who the unsent Gmail draft is addressed to. Nothing is sent.
-google_doc_id = ""
-email_recipient = ""
+# server_dir is the Gmail MCP project (contains dist/index.js). Empty uses the
+# sibling folder "MCP Server", or MCP_SERVER_DIR in the environment.
+google_doc_id = "1XFaQf8dCHPjX8thPwaciMpAhBXxxn71-nZ0IhrICr44"
+email_recipient = "himabindu.a26@gmail.com"
+server_dir = ""
 
 [pattern]
 # Signal thresholds for the Pattern Agent (Architecture section 6.2). Tune in Phase 3.

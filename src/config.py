@@ -60,6 +60,9 @@ class UiSettings(_Section):
 class McpSettings(_Section):
     google_doc_id: str = ""
     email_recipient: str = ""
+    # Folder that contains dist/index.js for the Gmail MCP server. Empty means
+    # the sibling ``MCP Server`` directory, or MCP_SERVER_DIR in the environment.
+    server_dir: str = ""
 
 
 class PatternSettings(_Section):

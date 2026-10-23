@@ -332,7 +332,7 @@ def get_desk() -> Desk:
     global _desk
     with _desk_ready:
         if _desk is None:
-            _desk = Desk(build_app())
+            _desk = Desk(build_app(load_settings()))
         return _desk
 
 

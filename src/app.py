@@ -22,6 +22,7 @@ from agents.compliance import ComplianceAgent
 from agents.facts import FactsAgent
 from agents.pattern import PatternAgent
 from approval.gate import ApprovalGate
+from approval.gmail_mcp import build_gmail_mcp_transport
 from approval.mcp_client import McpClient, McpTransport, UnconfiguredTransport
 from config import Settings, load_settings
 from constants import MAX_REFINEMENT_ROUNDS
@@ -110,8 +111,11 @@ def build_app(
     )
     router = build_router(settings, environ=environ, transport=transport)
     refiner = Refiner(orchestrator, router, logger=log, max_rounds=max_rounds)
+    wired = mcp_transport if mcp_transport is not None else build_gmail_mcp_transport(
+        settings, environ=environ
+    )
     gate = ApprovalGate(
-        McpClient(mcp_transport or UnconfiguredTransport()),
+        McpClient(wired or UnconfiguredTransport()),
         settings=settings,
         logger=log,
     )
