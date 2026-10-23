@@ -6,180 +6,276 @@
   <title>HDFC Mutual Fund FAQ Assistant</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,640&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --page: #f3efe6;
-      --card: #fffcf7;
-      --ink: #16332c;
-      --muted: #6b7872;
-      --teal: #0d5c4d;
-      --teal-soft: #e4f0ea;
-      --teal-text: #1a6b58;
-      --line: #e4ddd0;
-      --badge: #f7ebc8;
-      --badge-ink: #8a6410;
-      --error: #b42318;
+      --ledger: #0f2744;
+      --ledger-ink: #f3f6fa;
+      --ledger-muted: #c5d4e4;
+      --ledger-line: rgba(243, 246, 250, 0.16);
+      --brass: #e2a52a;
+      --brass-ink: #1c1404;
+      --stage: #d5e0ec;
+      --sheet: #fbfcfe;
+      --ink: #122033;
+      --muted: #4e6278;
+      --pass: #0f6e62;
+      --flag: #9f1d1d;
+      --rule: #c9d5e2;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
       margin: 0;
-      background: var(--page);
+      background: var(--stage);
       color: var(--ink);
-      font: 15px/1.5 "IBM Plex Sans", sans-serif;
+      font: 15px/1.45 "IBM Plex Sans", sans-serif;
     }
-    .page {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 36px 24px 28px;
-      min-height: 100%;
-      display: flex;
-      flex-direction: column;
+    :focus-visible {
+      outline: 2px solid var(--brass);
+      outline-offset: 2px;
     }
-    h1 {
-      margin: 0 0 28px;
-      text-align: center;
-      font: 600 28px/1.2 "Source Serif 4", Georgia, serif;
-      color: var(--teal);
-    }
-    .layout {
+    .shell {
+      height: 100vh;
       display: grid;
-      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-      gap: 20px;
-      flex: 1;
+      grid-template-columns: 340px minmax(0, 1fr);
       min-height: 0;
     }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      box-shadow: 0 1px 2px rgba(22, 51, 44, 0.04);
+    .rail {
+      background: var(--ledger);
+      color: var(--ledger-ink);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 28px 22px 18px;
     }
-    .welcome { padding: 28px 28px 24px; }
-    .welcome h2 {
-      margin: 0 0 8px;
-      font: 600 28px/1.2 "Source Serif 4", Georgia, serif;
+    .brand h1 {
+      margin: 0;
+      font: 640 34px/1.05 Fraunces, Georgia, serif;
+      letter-spacing: -0.03em;
     }
-    .welcome p { margin: 0; color: var(--muted); }
-    .kicker {
-      margin: 22px 0 10px 8px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
+    .brand-note {
+      margin: 8px 0 0;
+      color: var(--ledger-muted);
+      font-size: 13px;
     }
-    .chip {
-      display: block;
+    .rail-block {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .rail-history {
+      flex: 1;
+      margin-top: 28px;
+    }
+    .rail h2 {
+      margin: 0 0 10px;
+      font: 560 18px/1.2 Fraunces, Georgia, serif;
+      color: var(--ledger-ink);
+    }
+    .rail-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    #ticket-count {
+      font: 600 13px/1 "IBM Plex Sans", sans-serif;
+      color: var(--brass);
+    }
+    .ticket-list {
+      flex: 1;
+      overflow: auto;
+      margin: 0 -8px;
+      padding: 0 8px 8px;
+    }
+    .rail-empty {
+      margin: 4px 0 0;
+      color: var(--ledger-muted);
+      font-size: 14px;
+    }
+    .ticket {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
       width: 100%;
-      margin-bottom: 10px;
-      padding: 12px 16px;
+      margin: 0 0 4px;
+      padding: 10px 10px;
       border: 0;
-      border-radius: 999px;
-      background: var(--teal-soft);
-      color: var(--teal-text);
+      border-radius: 2px;
+      background: transparent;
+      color: inherit;
       font: 500 14px/1.35 "IBM Plex Sans", sans-serif;
       text-align: left;
       cursor: pointer;
     }
-    .chip:hover { filter: brightness(0.97); }
-    .right {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      min-height: 0;
+    .ticket:hover { background: rgba(243, 246, 250, 0.06); }
+    .ticket.is-current {
+      background: var(--brass);
+      color: var(--brass-ink);
     }
-    .answers {
-      flex: 1;
-      min-height: 320px;
-      padding: 28px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+    .ticket-q {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
-    .empty {
-      margin: auto;
-      max-width: 420px;
-      text-align: center;
-      color: var(--muted);
-    }
-    .empty-icon {
-      width: 64px;
-      height: 64px;
-      margin: 0 auto 16px;
-      border-radius: 50%;
-      background: #eef3ef;
-      color: #9aa8a1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .empty h2 {
-      margin: 0 0 8px;
-      font: 600 26px/1.2 "Source Serif 4", Georgia, serif;
-      color: var(--ink);
-    }
-    .empty p { margin: 0 0 16px; }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: var(--badge);
-      color: var(--badge-ink);
+    .ticket-tag {
       font-size: 11px;
       font-weight: 600;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.01em;
+      color: var(--ledger-muted);
+      padding-top: 2px;
     }
-    .desk-turn { display: grid; gap: 8px; }
-    .desk-user {
+    .ticket-tag[data-kind="pass"] { color: #8ee0d2; }
+    .ticket-tag[data-kind="flag"] { color: #ffb4ab; }
+    .ticket.is-current .ticket-tag { color: var(--brass-ink); }
+    .rail-examples {
+      border-top: 1px solid var(--ledger-line);
+      padding-top: 16px;
+      margin-top: 8px;
+    }
+    .chip {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 11px 0;
+      border: 0;
+      border-bottom: 1px solid var(--ledger-line);
+      border-radius: 0;
+      background: transparent;
+      color: var(--ledger-ink);
+      font: 500 14px/1.35 "IBM Plex Sans", sans-serif;
+      text-align: left;
+      cursor: pointer;
+    }
+    .chip:hover { color: var(--brass); }
+    .stage {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+    }
+    .sheet-head {
+      padding: 28px 16px 0;
+    }
+    .sheet-head h2 {
+      margin: 0;
+      font: 560 28px/1.2 Fraunces, Georgia, serif;
+      letter-spacing: -0.02em;
+    }
+    .sheet {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 18px 16px 24px;
+    }
+    .empty {
+      max-width: 36rem;
+      margin-top: 12px;
+    }
+    .empty p { margin: 0 0 14px; color: var(--muted); }
+    .badge {
+      display: inline-block;
+      padding: 4px 0;
+      color: var(--pass);
       font-size: 13px;
       font-weight: 600;
-      color: var(--teal);
+    }
+    .desk-turn { width: 100%; }
+    .desk-user {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+    .desk-above {
+      margin: 0 0 12px;
+      font: 600 18px/1.35 "IBM Plex Sans", sans-serif;
+      color: var(--ink);
+    }
+    .desk-removed {
+      margin: 0 0 12px;
+      font: 600 18px/1.35 "IBM Plex Sans", sans-serif;
+      color: var(--flag);
     }
     .desk-bot {
-      padding: 16px 0 4px;
-      border-top: 1px solid var(--line);
+      background: var(--sheet);
+      border-left: 4px solid var(--brass);
+      padding: 22px 26px 16px;
     }
-    .desk-draft { margin: 0 0 8px; }
-    .desk-meta { margin: 0; font-size: 12px; color: var(--muted); }
-    .desk-verdict { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+    .desk-draft {
+      margin: 0 0 14px;
+      font: 560 22px/1.45 Fraunces, Georgia, serif;
+      letter-spacing: -0.015em;
+    }
+    .desk-meta, .desk-checked {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+    .desk-meta a { color: var(--pass); }
+    .desk-verdict {
+      margin: 12px 0 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .desk-verdict[data-kind="pass"] { color: var(--pass); }
+    .desk-verdict[data-kind="flag"] { color: var(--flag); }
     .desk-actions {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-top: 12px;
+      align-items: center;
+      margin-top: 16px;
     }
     .desk-actions button {
-      height: 32px;
-      padding: 0 12px;
-      border-radius: 8px;
-      border: 1px solid var(--line);
-      background: var(--card);
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 2px;
+      border: 1px solid var(--ink);
+      background: transparent;
       color: var(--ink);
-      font: 600 12px "IBM Plex Sans", sans-serif;
+      font: 600 13px "IBM Plex Sans", sans-serif;
       cursor: pointer;
     }
+    .desk-actions button:hover { background: #eef3f8; }
     .desk-actions .desk-approve {
-      background: var(--teal);
-      border-color: var(--teal);
-      color: #fff;
+      background: var(--pass);
+      border-color: var(--pass);
+      color: #f4fffc;
     }
+    .desk-actions .desk-approve:hover { background: #0c5c52; }
     .desk-actions .desk-discard {
       margin-left: auto;
-      color: var(--error);
+      color: var(--flag);
       border: 0;
       background: none;
     }
+    .desk-actions .desk-discard:hover { background: transparent; text-decoration: underline; }
+    .desk-note {
+      margin: 0 12px 0 4px;
+      font: 600 18px/1.35 "IBM Plex Sans", sans-serif;
+      color: var(--ink);
+    }
+    .desk-note[data-kind="error"] { color: var(--flag); }
     .desk-status { margin: 0; font-size: 13px; color: var(--muted); }
-    .composer { padding: 16px 16px 12px; }
+    .composer {
+      border-top: 1px solid var(--rule);
+      background: var(--sheet);
+      padding: 14px 16px 16px;
+    }
     #desk-input {
       width: 100%;
-      min-height: 88px;
-      resize: none;
+      min-height: 64px;
+      resize: vertical;
       border: 0;
       outline: none;
       background: transparent;
@@ -190,72 +286,88 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
     }
     .hint {
       margin: 0;
+      max-width: 46rem;
       font-size: 12px;
       color: var(--muted);
     }
     #desk-send {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      flex: none;
       height: 40px;
       padding: 0 18px;
       border: 0;
-      border-radius: 8px;
-      background: var(--teal);
-      color: #fff;
+      border-radius: 2px;
+      background: var(--ledger);
+      color: var(--ledger-ink);
       font: 600 14px "IBM Plex Sans", sans-serif;
       cursor: pointer;
     }
-    #desk-send:hover { filter: brightness(1.08); }
+    #desk-send:hover { background: #17365e; }
     @media (max-width: 860px) {
-      .layout { grid-template-columns: 1fr; }
-      .page { padding: 20px 16px; }
-      h1 { font-size: 22px; }
+      body { overflow: auto; }
+      .shell {
+        height: auto;
+        min-height: 100vh;
+        grid-template-columns: 1fr;
+      }
+      .rail { padding: 20px 16px 12px; }
+      .ticket-list { max-height: 220px; flex: none; }
+      .sheet-head, .sheet, .composer { padding-left: 16px; padding-right: 16px; }
+      .composer-bar { align-items: flex-start; flex-direction: column; }
+      .brand h1, .sheet-head h2 { font-size: 26px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto; }
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <h1>HDFC Mutual Fund FAQ Assistant</h1>
-    <div class="layout">
-      <aside>
-        <section class="card welcome">
-          <h2>Welcome.</h2>
-          <p>Ask questions about five HDFC schemes: Large Cap, Mid Cap, Small Cap, Gold FoF, and Silver FoF.</p>
-        </section>
-        <p class="kicker">Example questions</p>
+  <div class="shell">
+    <aside class="rail">
+      <header class="brand">
+        <h1>Scheme desk</h1>
+        <p class="brand-note">HDFC Mutual Fund FAQ Assistant</p>
+      </header>
+      <section class="rail-block rail-history" aria-labelledby="history-heading">
+        <div class="rail-head">
+          <h2 id="history-heading">On this desk</h2>
+          <span id="ticket-count"></span>
+        </div>
+        <div class="ticket-list" id="ticket-list">
+          <p class="rail-empty" id="rail-empty">Questions you ask collect here. The one you have open stays on the right.</p>
+        </div>
+      </section>
+      <section class="rail-block rail-examples" aria-labelledby="examples-heading">
+        <h2 id="examples-heading">Example questions</h2>
         <button type="button" class="chip" data-example="What is the expense ratio of HDFC Large Cap Fund Direct Growth?">What is the expense ratio of HDFC Large Cap Fund Direct Growth?</button>
         <button type="button" class="chip" data-example="What is the exit load of HDFC Gold ETF Fund of Fund?">What is the exit load of HDFC Gold ETF Fund of Fund?</button>
         <button type="button" class="chip" data-example="What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?">What is the minimum SIP for HDFC Mid Cap Fund Direct Growth?</button>
-      </aside>
-      <div class="right">
-        <div class="card answers" id="desk-thread">
-          <div class="empty" id="desk-empty">
-            <div class="empty-icon" aria-hidden="true">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-5 4v-4.5A2.5 2.5 0 0 1 4 13.5v-7Z"/>
-              </svg>
-</div>
-            <h2>Answers appear here.</h2>
-            <p>Each reply includes one source link and a last-updated date. Previous questions stay visible above.</p>
-            <span class="badge">Facts-only. No investment advice.</span>
-</div>
-</div>
-        <div class="card composer">
-          <textarea id="desk-input" placeholder="Type a factual question about an in-scope HDFC scheme…"></textarea>
-          <div class="composer-bar">
-            <p class="hint">Only a question is sent. Do not enter PAN, Aadhaar, account numbers, OTP, email, or phone.</p>
-            <button id="desk-send" type="button">Ask <span aria-hidden="true">▶</span></button>
-</div>
-</div>
-</div>
-</div>
-</div>
+      </section>
+    </aside>
+    <main class="stage">
+      <header class="sheet-head">
+        <h2 id="sheet-title">The reply sits here</h2>
+      </header>
+      <div class="sheet" id="desk-thread">
+        <div class="empty" id="desk-empty">
+          <p>Ask about Large Cap, Mid Cap, Small Cap, Gold FoF, or Silver FoF. The draft, its source, and the reviewer verdict open in this column.</p>
+          <span class="badge">Facts only. No investment advice.</span>
+        </div>
+      </div>
+      <form class="composer" id="desk-form">
+        <label class="visually-hidden" for="desk-input" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Question</label>
+        <textarea id="desk-input" placeholder="Ask about exit load, expense ratio, or minimum SIP"></textarea>
+        <div class="composer-bar">
+          <p class="hint">Only a question is sent. Do not enter PAN, Aadhaar, account numbers, OTP, email, or phone.</p>
+          <button id="desk-send" type="submit">Ask</button>
+        </div>
+      </form>
+    </main>
+  </div>
   <script src="/config.js"></script>
-  <script src="/desk.js?v=13"></script>
+  <script src="/desk.js?v=18"></script>
 </body>
 </html>

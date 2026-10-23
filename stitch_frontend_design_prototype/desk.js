@@ -9,17 +9,24 @@
       bar.id = "desk-toast";
       bar.style.cssText =
         "position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:80;" +
-        "background:#16332c;color:#fff;padding:10px 16px;border-radius:8px;font:13px IBM Plex Sans,sans-serif;" +
-        "max-width:640px;box-shadow:0 4px 16px rgba(0,0,0,.2)";
+        "background:#0f2744;color:#f3f6fa;padding:10px 16px;border-radius:2px;font:13px IBM Plex Sans,sans-serif;" +
+        "max-width:640px";
       document.body.appendChild(bar);
     }
-    bar.style.background = kind === "error" ? "#b42318" : "#16332c";
+    bar.style.background = kind === "error" ? "#9f1d1d" : "#0f2744";
     bar.textContent = text;
     bar.hidden = false;
     clearTimeout(bar._hide);
     bar._hide = setTimeout(() => {
       bar.hidden = true;
     }, 6000);
+  }
+
+  function hideToast() {
+    const bar = $("desk-toast");
+    if (!bar) return;
+    clearTimeout(bar._hide);
+    bar.hidden = true;
   }
 
   function apiUrl(path) {
@@ -59,17 +66,31 @@
       "No draft. A person needs to look at this ticket.";
     const source = view && view.citation ? view.citation : "";
     const checked = view && view.last_checked ? "Last checked " + view.last_checked : "";
-    row.querySelector(".desk-meta").textContent = draft
-      ? [source, checked].filter(Boolean).join(" · ")
-      : "";
+    const meta = row.querySelector(".desk-meta");
+    meta.replaceChildren();
+    if (draft && source) {
+      const link = document.createElement("a");
+      link.href = source;
+      link.target = "_blank";
+      link.rel = "noreferrer";
+      link.textContent = source;
+      meta.appendChild(link);
+    }
+    row.querySelector(".desk-checked").textContent = draft ? checked : "";
     const verdict = view && view.verdict ? view.verdict : "NOT REVIEWED";
     const reasons = view && view.failure_types && view.failure_types.length
-      ? " · " + view.failure_types.join(", ")
+      ? " — " + view.failure_types.join(", ")
       : "";
-    const review = view && view.flagged
-      ? "Reviewer: FLAG — this draft cannot be approved." + reasons
-      : "Reviewer: " + verdict + reasons;
-    row.querySelector(".desk-verdict").textContent = review;
+    const verdictEl = row.querySelector(".desk-verdict");
+    const passed = verdict === "PASS" && !(view && view.flagged);
+    verdictEl.hidden = passed;
+    if (!passed) {
+      const review = view && view.flagged
+        ? "Reviewer: FLAG — this draft cannot be approved." + reasons
+        : "Reviewer: " + verdict + reasons;
+      verdictEl.textContent = review;
+      verdictEl.dataset.kind = view && view.flagged ? "flag" : "hold";
+    }
     const controls = (view && view.controls) || [];
     const left = view && typeof view.refinements_left === "number" ? view.refinements_left : 0;
     row.querySelector(".desk-refine").hidden = !controls.includes("refine");
@@ -78,6 +99,15 @@
     row.querySelector(".desk-approve").textContent = "Approve";
     row.querySelector(".desk-retry").hidden = !controls.includes("retry");
     row.querySelector(".desk-discard").hidden = false;
+  }
+
+  function showRefineNote(turn, text, kind) {
+    const note = turn && turn.querySelector(".desk-note");
+    if (!note) return;
+    note.hidden = !text;
+    note.textContent = text || "";
+    if (kind) note.dataset.kind = kind;
+    else delete note.dataset.kind;
   }
 
   function bindDiscard(button, turn) {
@@ -90,9 +120,11 @@
     row.innerHTML =
       '<p class="desk-draft"></p>' +
       '<p class="desk-meta"></p>' +
+      '<p class="desk-checked"></p>' +
       '<p class="desk-verdict"></p>' +
       '<div class="desk-actions">' +
       '<button type="button" class="desk-refine">Refine</button>' +
+      '<p class="desk-note" hidden></p>' +
       '<button type="button" class="desk-approve">Approve</button>' +
       '<button type="button" class="desk-retry">Retry write</button>' +
       '<button type="button" class="desk-discard">Discard</button>' +
@@ -114,6 +146,83 @@
   let busy = false;
   let lastComplaint = "";
   let lastTurn = null;
+  let turnSeq = 0;
+
+  function ticketList() {
+    return $("ticket-list");
+  }
+
+  function verdictLabel(view) {
+    if (!view) return "Held";
+    if (view.flagged) return "Flag";
+    if (view.verdict === "PASS") return "Pass";
+    return view.verdict || "Open";
+  }
+
+  function tagKind(view) {
+    if (view && view.flagged) return "flag";
+    if (view && view.verdict === "PASS") return "pass";
+    return "hold";
+  }
+
+  function syncRail() {
+    const turns = thread() ? thread().querySelectorAll(".desk-turn") : [];
+    const empty = $("rail-empty");
+    const count = $("ticket-count");
+    if (empty) empty.hidden = turns.length > 0;
+    if (count) count.textContent = turns.length ? String(turns.length) : "";
+  }
+
+  function railButton(wrap) {
+    return document.querySelector('.ticket[data-for="' + wrap.dataset.id + '"]');
+  }
+
+  function paintTag(button, label, kind) {
+    const tag = button && button.querySelector(".ticket-tag");
+    if (!tag) return;
+    tag.textContent = label;
+    tag.dataset.kind = kind;
+  }
+
+  function addRail(wrap, text, view) {
+    const list = ticketList();
+    if (!list) return;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "ticket";
+    button.dataset.for = wrap.dataset.id;
+    button.innerHTML = '<span class="ticket-q"></span><span class="ticket-tag"></span>';
+    button.querySelector(".ticket-q").textContent = text;
+    paintTag(button, verdictLabel(view), tagKind(view));
+    button.addEventListener("click", () => selectTurn(wrap));
+    list.appendChild(button);
+    syncRail();
+  }
+
+  function updateRail(wrap, view) {
+    if (!wrap) return;
+    paintTag(railButton(wrap), verdictLabel(view), tagKind(view));
+  }
+
+  function selectTurn(wrap) {
+    const box = thread();
+    if (!box || !wrap) return;
+    box.querySelectorAll(".desk-turn").forEach((turn) => {
+      turn.hidden = turn !== wrap;
+    });
+    document.querySelectorAll(".ticket").forEach((button) => {
+      const on = button.dataset.for === wrap.dataset.id;
+      button.classList.toggle("is-current", on);
+      if (on) button.setAttribute("aria-current", "true");
+      else button.removeAttribute("aria-current");
+    });
+    const title = $("sheet-title");
+    const question = ((wrap.querySelector(".desk-user") || {}).textContent || "").trim();
+    if (title) title.textContent = question || "The reply sits here";
+    setEmpty(false);
+    const button = railButton(wrap);
+    if (button && button.scrollIntoView) button.scrollIntoView({ block: "nearest" });
+  }
 
   function freezeOlderTurns() {
     const box = thread();
@@ -132,14 +241,16 @@
     freezeOlderTurns();
     const wrap = document.createElement("div");
     wrap.className = "desk-turn";
+    wrap.dataset.id = "t" + (++turnSeq);
     const bot = makeBotCard(view, message);
     wrap.appendChild(makeUserRow(userText));
     wrap.appendChild(bot);
     bindDiscard(bot.querySelector(".desk-discard"), wrap);
     box.appendChild(wrap);
-    box.scrollTop = box.scrollHeight;
     lastTurn = wrap;
     lastComplaint = userText;
+    addRail(wrap, userText, view);
+    selectTurn(wrap);
   }
 
   function replaceDraft(view, message) {
@@ -152,8 +263,8 @@
     bindDiscard(next.querySelector(".desk-discard"), lastTurn);
     if (old) lastTurn.replaceChild(next, old);
     else lastTurn.appendChild(next);
-    const box = thread();
-    if (box) box.scrollTop = box.scrollHeight;
+    updateRail(lastTurn, view);
+    selectTurn(lastTurn);
   }
 
   async function runComplaint(complaint, { asNew } = { asNew: true }) {
@@ -208,30 +319,55 @@
         body: JSON.stringify({ feedback }),
       });
       replaceDraft(view, view.notice || "");
-      toast(view.notice || (typed ? "Draft updated." : "Draft rewritten."));
+      const written = view.notice || (typed ? "Draft updated." : "Draft re-written.");
+      showRefineNote(lastTurn, written);
+      hideToast();
     } catch (error) {
       const view = error.data && error.data.view;
       if (view) replaceDraft(view, error.message);
-      toast(error.message, "error");
+      showRefineNote(lastTurn, error.message, "error");
+      hideToast();
     } finally {
       busy = false;
     }
   }
 
+  function showAbove(turn, text) {
+    if (!turn) return;
+    let note = turn.querySelector(".desk-above");
+    if (!text) {
+      if (note) note.remove();
+      return;
+    }
+    if (!note) {
+      note = document.createElement("p");
+      note.className = "desk-above";
+      const card = turn.querySelector(".desk-bot");
+      if (card) turn.insertBefore(note, card);
+      else turn.appendChild(note);
+    }
+    note.textContent = text;
+  }
+
   function showApproved(turn, message) {
     const actions = turn && turn.querySelector(".desk-actions");
     if (!actions) return;
-    actions.innerHTML =
-      '<p class="desk-status">' +
-      (message || "Approved. Nothing was sent.") +
-      "</p>" +
-      '<button type="button" class="desk-discard">Discard</button>';
+    actions.innerHTML = '<button type="button" class="desk-discard">Discard</button>';
     bindDiscard(actions.querySelector(".desk-discard"), turn);
+    showAbove(turn, message || "Approved. Nothing was sent.");
+    const button = railButton(turn);
+    paintTag(button, "Approved", "pass");
+    hideToast();
+  }
+
+  function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async function discard(turn) {
     const target = turn || lastTurn;
-    if (!target || busy) return;
+    if (!target || busy || target.dataset.removing) return;
+    target.dataset.removing = "1";
     const current = target === lastTurn;
     if (current) {
       try {
@@ -239,14 +375,31 @@
       } catch (error) {
         const msg = (error.data && error.data.error) || error.message || "";
         if (!/no open ticket|closed/i.test(msg)) {
+          delete target.dataset.removing;
           toast(msg, "error");
           return;
         }
       }
     }
+    const note = document.createElement("p");
+    note.className = "desk-removed";
+    note.textContent = "Removed from this desk.";
+    const card = target.querySelector(".desk-bot");
+    if (card) target.insertBefore(note, card);
+    else target.appendChild(note);
+    hideToast();
+    await wait(1200);
+    const button = railButton(target);
+    if (button) button.remove();
+    const wasOpen = !target.hidden;
     target.remove();
     rememberLastTurn();
-    toast("Removed from the chat.");
+    syncRail();
+    if (lastTurn && wasOpen) selectTurn(lastTurn);
+    else if (!lastTurn) {
+      const title = $("sheet-title");
+      if (title) title.textContent = "The reply sits here";
+    }
   }
 
   async function approve() {
@@ -297,6 +450,11 @@
         }
       });
     }
+    const form = $("desk-form");
+    if (form) form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      send();
+    });
     document.querySelectorAll("[data-example]").forEach((chip) => {
       chip.addEventListener("click", () => {
         if (input) input.value = chip.getAttribute("data-example") || "";

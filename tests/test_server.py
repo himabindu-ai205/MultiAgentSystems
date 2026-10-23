@@ -73,7 +73,7 @@ def test_health_and_stitch_frontend_are_served():
         assert b"Ticket Overview" not in body
         assert b"Rahul" not in body
         status, script = call(server, "GET", "/desk.js")
-        assert status == 200 and b"Welcome." in body
+        assert status == 200 and b"Scheme desk" in body and b"On this desk" in body
         assert b"function send" in script or b"async function send" in script
         assert b"The reviewer has not passed this reply yet." not in script
         assert b"Reviewer:" in script
