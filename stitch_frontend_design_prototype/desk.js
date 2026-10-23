@@ -68,8 +68,8 @@
     const left = view && typeof view.refinements_left === "number" ? view.refinements_left : 0;
     row.querySelector(".desk-refine").hidden = !controls.includes("refine");
     row.querySelector(".desk-refine").textContent = "Refine (" + left + " left)";
-    row.querySelector(".desk-approve").hidden = !controls.includes("approve") && !controls.includes("retry");
-    row.querySelector(".desk-approve").textContent = controls.includes("retry") ? "Retry write" : "Approve";
+    row.querySelector(".desk-approve").hidden = false;
+    row.querySelector(".desk-approve").textContent = "Approve";
     row.querySelector(".desk-discard").hidden = !controls.includes("discard");
   }
 
@@ -96,13 +96,6 @@
     row.className = "desk-user";
     row.textContent = text;
     return row;
-  }
-
-  function lockActions(turn, label) {
-    const actions = turn && turn.querySelector(".desk-actions");
-    if (!actions) return;
-    actions.innerHTML = '<p class="desk-status"></p>';
-    actions.querySelector(".desk-status").textContent = label;
   }
 
   let busy = false;
@@ -202,14 +195,12 @@
     if (busy) return;
     try {
       const data = await api("/api/tickets/current/approve", { method: "POST", body: "{}" });
-      lockActions(lastTurn, data.message || "Approved. Nothing was sent.");
       toast(data.message || "Approved. Nothing was sent.");
     } catch (error) {
       if (/isn't available/i.test(error.message || "")) {
         toast(error.message, "error");
         return;
       }
-      lockActions(lastTurn, "Approved. Nothing was sent.");
       toast("Approved. Nothing was sent.");
     }
   }
