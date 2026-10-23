@@ -28,11 +28,13 @@ from constants import MAX_REFINEMENT_ROUNDS
 from ingress.redactor import IngressError, redact
 from logging_allowlist import AllowListLogger
 from orchestrator.dispatch import Orchestrator, RunOutput
-from orchestrator.graph import NodeParams
+from orchestrator.graph import NODE_NAMES, NodeParams
 from refinement.router import RefinementPlan, RefinementRouter
 from schemas import RefinementEntry, Session
 
 DEFAULT_MAX_FEEDBACK_CHARS = 1000
+# The desk's Refine button sends this. It is not a style request.
+RERUN_ALL = "rerun"
 
 REFUSAL_MESSAGES = {
     "REFINEMENT_CAP": (
@@ -94,9 +96,13 @@ class Refiner:
         finally:
             feedback = None  # type: ignore[assignment]  # only the redacted words are used from here
 
-        plan = self._router.route(redacted)
+        rerun_all = redacted.strip().lower() == RERUN_ALL
+        if rerun_all:
+            plan = RefinementPlan(category="unclear", nodes=NODE_NAMES, style="standard")
+        else:
+            plan = self._router.route(redacted)
         state = session.refinement
-        style = plan.style or state.style
+        style = "standard" if rerun_all else (plan.style or state.style)
         scheme = plan.scheme_override or state.scheme_override
         theme = plan.theme_hint or state.theme_hint
         window = state.window_shift_weeks if plan.window_shift_weeks is None else plan.window_shift_weeks
@@ -106,6 +112,7 @@ class Refiner:
             plan.nodes,
             params=NodeParams(scheme_override=scheme, theme_hint=theme, window_shift_weeks=window),
             style=style,
+            reword=rerun_all,
         )
 
         if session.approval.status == "approved":

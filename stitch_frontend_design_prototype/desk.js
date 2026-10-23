@@ -178,17 +178,17 @@
     }
     const input = $("desk-input");
     const typed = (input && input.value.trim()) || "";
-    const feedback = typed || "shorter";
+    const feedback = typed || "rerun";
     if (input) input.value = "";
     busy = true;
-    toast("Refining the draft…");
+    toast(typed ? "Updating the draft…" : "Running Facts, Pattern and Compliance again…");
     try {
       const view = await api("/api/tickets/current/refine", {
         method: "POST",
         body: JSON.stringify({ feedback }),
       });
       replaceDraft(view, view.notice || "");
-      toast(view.notice || (typed ? "Draft updated." : "Draft shortened."));
+      toast(view.notice || (typed ? "Draft updated." : "Draft rewritten."));
     } catch (error) {
       const view = error.data && error.data.view;
       if (view) replaceDraft(view, error.message);

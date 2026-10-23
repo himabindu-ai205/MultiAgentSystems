@@ -50,6 +50,9 @@ ANSWER_CLOSING = "If this doesn't match what you see, reply and we will look int
 
 Wording = Literal["template", "model", "template_fallback"]
 
+# Sent as the drafter note when Refine asks for new wording, not a shorter reply.
+REWORD_INSTRUCTION = "Use different wording from the template. Keep the same meaning."
+
 # Reason codes. Fixed text, so they can be logged.
 BAD_INPUT = "DRAFT_BAD_INPUT"
 BAD_DATE = "DRAFT_BAD_FETCHED_AT"
@@ -99,6 +102,8 @@ def build_prompt(request: DraftRequest) -> str:
     ]
     if request.style == "shorter":
         lines.append("Make it as short as you can.")
+    elif request.rework == REWORD_INSTRUCTION:
+        lines.append(REWORD_INSTRUCTION)
     if request.citation:
         lines.append(f"Include this link exactly once: {request.citation}")
         lines.append(f"Include this date: {request.last_checked}")

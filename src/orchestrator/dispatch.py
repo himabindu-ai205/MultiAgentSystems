@@ -103,6 +103,7 @@ class Orchestrator:
         *,
         params: NodeParams = NodeParams(),
         style: str = "standard",
+        reword: bool = False,
     ) -> RunOutput:
         """Run only ``nodes``, reuse the cached results for the rest, then merge and redraft.
 
@@ -116,7 +117,7 @@ class Orchestrator:
         for node in NODE_NAMES:
             if node not in chosen and getattr(session.results, node) is None:
                 raise ValueError(f"no cached result for {node}, so it has to run")
-        return self._run(session, chosen, params, style=style)
+        return self._run(session, chosen, params, style=style, reword=reword)
 
     # -- internals ---------------------------------------------------------
 
@@ -128,6 +129,7 @@ class Orchestrator:
         *,
         style: str,
         first_run: bool = False,
+        reword: bool = False,
     ) -> RunOutput:
         traces: Mapping[str, NodeTrace] = MappingProxyType({})
         if nodes:
@@ -144,9 +146,9 @@ class Orchestrator:
         if first_run and compliance is not None and is_advice_request(compliance):
             session.advice_attempts += 1
 
-        return self._finish(session, traces, nodes, style=style)
+        return self._finish(session, traces, nodes, style=style, reword=reword)
 
-    def _compose(self, session: Session, style: str, *, rework: str | None = None, log: bool = True) -> Outcome:
+    def _compose(self, session: Session, style: str, *, rework: str | None = None, reword: bool = False, log: bool = True) -> Outcome:
         results = session.results
         return compose(
             session.request_id,
@@ -158,6 +160,7 @@ class Orchestrator:
             advice_attempts=session.advice_attempts,
             style=style,
             rework=rework,
+            reword=reword,
             logger=self._logger if log else None,
         )
 
@@ -208,8 +211,8 @@ class Orchestrator:
             rounds_used=2, last_verdict=review.verdict, flagged=review.flagged
         )
 
-    def _finish(self, session: Session, traces: Mapping[str, NodeTrace], nodes: tuple[str, ...], *, style: str) -> RunOutput:
-        outcome = self._compose(session, style)
+    def _finish(self, session: Session, traces: Mapping[str, NodeTrace], nodes: tuple[str, ...], *, style: str, reword: bool = False) -> RunOutput:
+        outcome = self._compose(session, style, reword=reword)
 
         review: ReviewerResult | None = None
         state = ReviewerState()

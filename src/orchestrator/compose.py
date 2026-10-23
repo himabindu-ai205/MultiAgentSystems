@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 from logging_allowlist import AllowListLogger
 from orchestrator.disposition import AgentFailure, decide, failed_agents
-from orchestrator.drafter import DraftOutcome, Drafter, Wording
+from orchestrator.drafter import REWORD_INSTRUCTION, DraftOutcome, Drafter, Wording
 from orchestrator.routing import build_routing_note
 from schemas import (
     ComplianceResult,
@@ -46,6 +46,7 @@ def compose(
     advice_attempts: int = 0,
     style: str = "standard",
     rework: str | None = None,
+    reword: bool = False,
     logger: AllowListLogger | None = None,
 ) -> Outcome:
     """Decide, draft and route. A drafting failure never reaches the human as a pass.
@@ -61,7 +62,8 @@ def compose(
     extra: tuple[AgentFailure, ...] = ()
 
     if disposition.value != "HOLD_AGENT_FAILURE":
-        outcome = drafter.draft(disposition.value, facts, style=style, rework=rework)
+        note = REWORD_INSTRUCTION if reword and not rework else rework
+        outcome = drafter.draft(disposition.value, facts, style=style, rework=note)
         draft = outcome.draft
         if draft is None:
             disposition = Disposition(value="HOLD_AGENT_FAILURE")

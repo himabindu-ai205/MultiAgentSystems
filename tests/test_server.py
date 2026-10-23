@@ -142,6 +142,21 @@ def test_refine_stops_after_five_rounds():
         server.server_close()
 
 
+def test_refine_button_reruns_every_agent_and_keeps_the_full_reply():
+    server, desk = start_server()
+    try:
+        call(server, "POST", "/api/tickets", {"complaint": QUESTION})
+        status, data = call(server, "POST", "/api/tickets/current/refine", {"feedback": "rerun"})
+        assert status == 200
+        assert data["refinements_left"] == 4
+        assert set(data["agents_fired"]) >= {"facts", "pattern", "compliance", "orchestrator"}
+        assert "look into it" in data["draft_text"]
+        assert desk.session.refinement.style == "standard"
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
 def test_refine_and_discard_follow_the_cli_controls():
     server, _ = start_server()
     try:
