@@ -63,6 +63,9 @@ class McpSettings(_Section):
     # Folder that contains dist/index.js for the Gmail MCP server. Empty means
     # the sibling ``MCP Server`` directory, or MCP_SERVER_DIR in the environment.
     server_dir: str = ""
+    # HTTPS origin of a hosted Gmail MCP server, e.g. https://gmail-mcp.onrender.com
+    # Empty uses MCP_SERVER_URL in the environment. Local stdio is used when both are empty.
+    server_url: str = ""
 
 
 class PatternSettings(_Section):

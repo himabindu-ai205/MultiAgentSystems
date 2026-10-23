@@ -10,3 +10,7 @@ services:
         value: "3.11.9"
       - key: GROQ_API_KEY
         sync: false
+      - key: MCP_SERVER_URL
+        sync: false
+      - key: MCP_HTTP_TOKEN
+        sync: false

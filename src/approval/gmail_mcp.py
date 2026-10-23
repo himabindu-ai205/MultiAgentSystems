@@ -13,6 +13,8 @@ import shutil
 import subprocess
 import sys
 import threading
+import urllib.error
+import urllib.request
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -23,6 +25,60 @@ from paths import PROJECT_ROOT
 
 PROTOCOL = "2024-11-05"
 DEFAULT_SERVER_DIR = PROJECT_ROOT.parent / "MCP Server"
+
+
+class HttpGmailMcpTransport:
+    """HTTPS client for a hosted Gmail MCP server. Calls ``/invoke`` only."""
+
+    def __init__(self, base_url: str, *, token: str = "", timeout_seconds: float = 30.0) -> None:
+        self._base = base_url.rstrip("/")
+        if self._base.endswith("/mcp"):
+            self._base = self._base[: -len("/mcp")]
+        self._token = token
+        self._timeout = timeout_seconds
+
+    def append_to_google_doc(self, *, document_id: str, content: str) -> None:
+        self._require_ok(self._invoke("append_to_google_doc", {"documentId": document_id, "content": content}))
+
+    def create_email_draft(self, *, to: str, subject: str, body: str) -> str:
+        envelope = self._invoke("create_email_draft", {"to": [to], "subject": subject, "body": body})
+        self._require_ok(envelope)
+        draft_id = envelope.get("draftId")
+        return str(draft_id) if draft_id else ""
+
+    def _require_ok(self, envelope: dict[str, Any]) -> None:
+        if envelope.get("success") is True:
+            return
+        error = envelope.get("error") if isinstance(envelope.get("error"), dict) else {}
+        raise McpError(str(error.get("code") or "MCP_CALL_FAILED"))
+
+    def _invoke(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        payload = json.dumps({"name": name, "arguments": arguments}, ensure_ascii=True).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if self._token:
+            headers["Authorization"] = "Bearer " + self._token
+        request = urllib.request.Request(
+            self._base + "/invoke",
+            data=payload,
+            headers=headers,
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self._timeout) as response:
+                raw = response.read()
+        except urllib.error.HTTPError as error:
+            raw = error.read()
+            if error.code == 401:
+                raise McpError("MCP_NOT_CONFIGURED") from error
+        except urllib.error.URLError as error:
+            raise McpError("MCP_CALL_FAILED") from error
+        try:
+            envelope = json.loads(raw.decode("utf-8"))
+        except json.JSONDecodeError as exc:
+            raise McpError("MCP_CALL_FAILED") from exc
+        if not isinstance(envelope, dict):
+            raise McpError("MCP_CALL_FAILED")
+        return envelope
 
 
 class GmailMcpTransport:
@@ -187,8 +243,12 @@ def build_gmail_mcp_transport(
     *,
     environ: Mapping[str, str] | None = None,
 ) -> McpTransport:
-    """The real Gmail MCP process when ``dist/index.js`` is present, otherwise a no-op."""
+    """HTTP when ``MCP_SERVER_URL`` is set, else local stdio, else a no-op."""
     env = dict(os.environ if environ is None else environ)
+    url = (settings.mcp.server_url or env.get("MCP_SERVER_URL") or "").strip()
+    token = env.get("MCP_HTTP_TOKEN", "").strip()
+    if url:
+        return HttpGmailMcpTransport(url, token=token)
     root = resolve_server_dir(settings, env)
     script = root / "dist" / "index.js"
     node = shutil.which("node", path=env.get("PATH"))
@@ -199,6 +259,7 @@ def build_gmail_mcp_transport(
 
 __all__ = [
     "GmailMcpTransport",
+    "HttpGmailMcpTransport",
     "build_gmail_mcp_transport",
     "resolve_server_dir",
 ]
