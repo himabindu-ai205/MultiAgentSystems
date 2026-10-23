@@ -138,19 +138,24 @@ def test_one_approval_appends_the_doc_then_creates_an_email_draft_and_never_send
     assert [c[0] for c in mcp.calls] == ["append_to_google_doc", "create_email_draft"]
     assert mcp.calls[0][1]["document_id"] == DOC
     assert mcp.calls[1][1]["to"] == MAIL
+    assert mcp.calls[1][1]["subject"] == f"HDFC Mutual Fund FAQ Assistant : {session.request_id}"
     record = mcp.calls[0][1]["content"]
+    assert record == mcp.calls[1][1]["body"]
     assert session.redacted_text in record
     assert session.draft.text in record
     assert URL in record
     assert "28-Jun-2026" in record
-    assert session.routing_note.team in record
-    assert "facts" in record
+    assert "Complaint:" in record
+    assert "(redacted)" not in record
+    assert "Disposition:" not in record
+    assert "Team:" not in record
+    assert "Signals:" not in record
+    assert "Agents fired:" not in record
     logged = [e for e in sink if e.get("event") == "approval"]
     assert logged[0]["action"] == "approve"
     assert logged[0]["mcp_tools_called"] == ["append_to_google_doc", "create_email_draft"]
     assert logged[0]["draft_hash"] == session.approval.draft_hash
     assert set(logged[0]) <= {"event", "ts", "request_id", "action", "draft_hash", "mcp_tools_called"}
-    assert "Agents fired:" in record
 
 
 def test_a_second_click_is_ignored_and_does_not_write_again():

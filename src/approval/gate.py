@@ -79,30 +79,23 @@ def void_approval(session: Session) -> None:
     session.approval = ApprovalState()
 
 
+def email_subject(request_id: str) -> str:
+    return f"HDFC Mutual Fund FAQ Assistant : {request_id}"
+
+
 def build_record(session: Session, agents_fired: Sequence[str]) -> str:
-    """The text written to the doc and the email draft. Redacted fields only."""
-    draft, note = session.draft, session.routing_note
-    fired = ", ".join(agents_fired) or "(none)"
-    lines = [
-        f"Ticket: {session.request_id}",
-        f"Complaint (redacted): {session.redacted_text}",
-        f"Disposition: {session.disposition or '(none)'}",
-        f"Reply: {draft.text if draft else '(none)'}",
-        f"Citation: {draft.citation if draft else '(none)'}",
-        f"Last checked: {draft.last_checked if draft else '(none)'}",
-        f"Team: {note.team if note else '(none)'}  Priority: {note.priority if note else '(none)'}",
-        f"Reason: {note.reason if note else '(none)'}",
-    ]
-    if note and note.signals:
-        lines.append(
-            "Signals: "
-            f"facts={note.signals.facts} pattern={note.signals.pattern} "
-            f"compliance={note.signals.compliance}"
-        )
-    if note and note.disagreement:
-        lines.append(f"Disagreement: {note.disagreement}")
-    lines.append(f"Agents fired: {fired}")
-    return "\n".join(lines)
+    """The text written to the doc and the email draft. FAQ fields only."""
+    del agents_fired
+    draft = session.draft
+    return "\n".join(
+        [
+            f"Ticket: {session.request_id}",
+            f"Complaint: {session.redacted_text}",
+            f"Reply: {draft.text if draft else '(none)'}",
+            f"Citation: {draft.citation if draft else '(none)'}",
+            f"Last checked: {draft.last_checked if draft else '(none)'}",
+        ]
+    )
 
 
 class ApprovalGate:
@@ -196,7 +189,7 @@ class ApprovalGate:
                 self._client.create_email_draft(
                     token,
                     to=self._settings.mcp.email_recipient,
-                    subject=f"Support record {session.request_id}",
+                    subject=email_subject(session.request_id),
                     body=record,
                 )
             except McpError:
@@ -227,6 +220,7 @@ __all__ = [
     "ApprovalGate",
     "ApprovalOutcome",
     "build_record",
+    "email_subject",
     "draft_hash",
     "mcp_complete",
     "void_approval",
