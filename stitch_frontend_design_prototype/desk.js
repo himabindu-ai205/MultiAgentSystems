@@ -50,25 +50,23 @@
     if (empty) empty.hidden = !show;
   }
 
-  function draftText(view, message) {
-    return (
-      (view && view.draft_text) ||
-      (view && view.routing_reason) ||
-      message ||
-      "No draft. A person needs to look at this ticket."
-    );
+  function passed(view) {
+    return !!(view && view.verdict === "PASS" && view.draft_text && !view.flagged);
   }
 
   function fillBot(row, view, message) {
     const source = view && view.citation ? view.citation : "";
     const checked = view && view.last_checked ? "Last checked " + view.last_checked : "";
-    row.querySelector(".desk-draft").textContent = draftText(view, message);
-    row.querySelector(".desk-meta").textContent = [source, checked].filter(Boolean).join(" · ");
+    const ok = passed(view);
+    row.querySelector(".desk-draft").textContent = ok
+      ? view.draft_text
+      : "The reviewer has not passed this reply yet.";
+    row.querySelector(".desk-meta").textContent = ok ? [source, checked].filter(Boolean).join(" · ") : "";
     const controls = (view && view.controls) || [];
     const left = view && typeof view.refinements_left === "number" ? view.refinements_left : 0;
     row.querySelector(".desk-refine").hidden = !controls.includes("refine");
     row.querySelector(".desk-refine").textContent = "Refine (" + left + " left)";
-    row.querySelector(".desk-approve").hidden = false;
+    row.querySelector(".desk-approve").hidden = !ok;
     row.querySelector(".desk-approve").textContent = "Approve";
     row.querySelector(".desk-discard").hidden = !controls.includes("discard");
   }
@@ -191,17 +189,23 @@
     }
   }
 
+  function showApproved(turn) {
+    const actions = turn && turn.querySelector(".desk-actions");
+    if (!actions) return;
+    actions.innerHTML = '<p class="desk-status">Approved. Nothing was sent.</p>';
+  }
+
   async function approve() {
     if (busy) return;
     try {
-      const data = await api("/api/tickets/current/approve", { method: "POST", body: "{}" });
-      toast(data.message || "Approved. Nothing was sent.");
+      await api("/api/tickets/current/approve", { method: "POST", body: "{}" });
+      showApproved(lastTurn);
     } catch (error) {
       if (/isn't available/i.test(error.message || "")) {
         toast(error.message, "error");
         return;
       }
-      toast("Approved. Nothing was sent.");
+      showApproved(lastTurn);
     }
   }
 
