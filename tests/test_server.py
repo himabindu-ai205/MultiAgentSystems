@@ -243,7 +243,7 @@ def test_split_deploy_points_vercel_at_the_page_and_render_at_the_api():
     assert "multiagentsystems.onrender.com" in page
     render = (PROJECT_ROOT / "render.yaml").read_text(encoding="utf-8")
     assert "python scripts/serve_local.py" in render
-    assert 'SERVE_FRONTEND' in render and '"0"' in render
+    assert "SERVE_FRONTEND" not in render
     vercel = (PROJECT_ROOT / "vercel.json").read_text(encoding="utf-8")
     assert "stitch_frontend_design_prototype" in vercel
 
